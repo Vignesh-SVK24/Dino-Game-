@@ -1,0 +1,17 @@
+{
+  "name": "Jurassic Dino Run",
+  "short_name": "Dino Run",
+  "description": "Epic Jurassic Dinosaur Runner Game",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0a0b12",
+  "theme_color": "#f5a623",
+  "icons": [
+    {
+      "src": "assets/jungle.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

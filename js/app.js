@@ -217,6 +217,16 @@ JDR.app={
       if(e.target === mJump || e.target === mDuck || mJump.contains(e.target) || mDuck.contains(e.target)) return;
       if(self.currentScreen==='game-screen' && !JDR.engine.paused) JDR.engine.jump(0);
     });
+  },
+
+  toggleFullscreen:function(){
+    if(!document.fullscreenElement){
+      document.documentElement.requestFullscreen().catch(function(e){
+        console.error('Error entering fullscreen:',e);
+      });
+    }else{
+      document.exitFullscreen();
+    }
   }
 };
 
