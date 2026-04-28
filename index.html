@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Jurassic Dino Run | Epic Dinosaur Runner Game</title>
+  <meta name="description" content="Race through prehistoric worlds in this epic dinosaur runner game with 5 Jurassic maps, 8 collectible dinosaurs, and multiplayer mode.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Ambient Particles Background -->
+    <div id="ambient-bg">
+      <div class="ambient-particle"></div>
+      <div class="ambient-particle"></div>
+      <div class="ambient-particle"></div>
+      <div class="ambient-particle"></div>
+      <div class="ambient-particle"></div>
+      <div class="ambient-particle"></div>
+      <div class="ambient-particle"></div>
+      <div class="ambient-particle"></div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="screen active">
+      <div class="loading-content">
+        <div class="loading-dino"></div>
+        <h1 class="game-title">Jurassic<br><span>Dino Run</span></h1>
+        <div class="loading-bar-container">
+          <div class="loading-bar" id="loading-bar"></div>
+        </div>
+        <p class="loading-text" id="loading-text">Loading assets...</p>
+      </div>
+    </div>
+
+    <!-- Main Menu -->
+    <div id="main-menu" class="screen">
+      <div class="menu-header">
+        <h1 class="game-title glow">Jurassic<br><span>Dino Run</span></h1>
+        <p class="subtitle">The Ultimate Prehistoric Runner</p>
+      </div>
+      <div class="menu-coins">
+        <span class="coin-icon">🪙</span>
+        <span class="coin-amount" id="menu-coins">0</span>
+      </div>
+      <div class="menu-buttons">
+        <button class="btn btn-primary btn-lg" id="btn-play" onclick="JDR.app.showScreen('mode-select')">
+          <span class="btn-icon">▶</span> Play Game
+        </button>
+        <button class="btn btn-secondary" id="btn-maps" onclick="JDR.app.showScreen('map-select')">
+          <span class="btn-icon">🗺️</span> Select Map
+        </button>
+        <button class="btn btn-secondary" id="btn-shop" onclick="JDR.app.showScreen('shop-screen')">
+          <span class="btn-icon">🦕</span> Dino Shop
+        </button>
+        <button class="btn btn-secondary" id="btn-scores" onclick="JDR.app.showScreen('scores-screen')">
+          <span class="btn-icon">🏆</span> High Scores
+        </button>
+        <button class="btn btn-secondary" id="btn-settings" onclick="JDR.app.showScreen('settings-screen')">
+          <span class="btn-icon">⚙️</span> Settings
+        </button>
+      </div>
+      <div class="menu-footer">
+        <p>Press <kbd>SPACE</kbd> to Quick Start</p>
+      </div>
+    </div>
+
+    <!-- Mode Select -->
+    <div id="mode-select" class="screen">
+      <button class="btn-back" onclick="JDR.app.showScreen('main-menu')">← Back</button>
+      <div class="global-coins">
+        <span class="coin-icon">🪙</span>
+        <span class="coin-amount">0</span>
+      </div>
+      <h2 class="screen-title">Select Mode</h2>
+      <div class="mode-cards">
+        <div class="mode-card" id="btn-single" onclick="JDR.app.startGame(1)">
+          <div class="mode-icon">🦖</div>
+          <h3>Single Player</h3>
+          <p>Endless survival run. Beat your high score!</p>
+          <div class="mode-controls">
+            <kbd>SPACE</kbd> Jump &nbsp; <kbd>↓</kbd> Duck
+          </div>
+        </div>
+        <div class="mode-card" id="btn-multi" onclick="JDR.app.startGame(2)">
+          <div class="mode-icon">🦖🦕</div>
+          <h3>Two Players</h3>
+          <p>Race together on the same screen!</p>
+          <div class="mode-controls">
+            <span>P1: <kbd>W</kbd>/<kbd>S</kbd></span>
+            <span>P2: <kbd>↑</kbd>/<kbd>↓</kbd></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map Select -->
+    <div id="map-select" class="screen">
+      <button class="btn-back" onclick="JDR.app.showScreen('main-menu')">← Back</button>
+      <div class="global-coins">
+        <span class="coin-icon">🪙</span>
+        <span class="coin-amount">0</span>
+      </div>
+      <h2 class="screen-title">Select Map</h2>
+      <div class="map-grid" id="map-grid">
+        <!-- Maps populated by JS -->
+      </div>
+    </div>
+
+    <!-- Shop Screen -->
+    <div id="shop-screen" class="screen">
+      <button class="btn-back" onclick="JDR.app.showScreen('main-menu')">← Back</button>
+      <h2 class="screen-title">Dino Shop</h2>
+      <div class="shop-coins">
+        <span class="coin-icon">🪙</span>
+        <span class="coin-amount" id="shop-coins">0</span>
+      </div>
+      <div class="shop-grid" id="shop-grid">
+        <!-- Dinos populated by JS -->
+      </div>
+      <div class="shop-preview" id="shop-preview">
+        <canvas id="preview-canvas" width="200" height="200"></canvas>
+        <div id="preview-info">
+          <h3 id="preview-name">Select a Dinosaur</h3>
+          <div id="preview-stats"></div>
+          <button class="btn btn-primary" id="preview-btn" style="display:none">Select</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Screen -->
+    <div id="settings-screen" class="screen">
+      <button class="btn-back" onclick="JDR.app.showScreen('main-menu')">← Back</button>
+      <div class="global-coins">
+        <span class="coin-icon">🪙</span>
+        <span class="coin-amount">0</span>
+      </div>
+      <h2 class="screen-title">Settings</h2>
+      <div class="settings-panel glass-panel">
+        <div class="setting-row">
+          <label>Music Volume</label>
+          <input type="range" id="set-music" min="0" max="100" value="70" oninput="JDR.app.updateSetting('musicVol',this.value)">
+          <span id="set-music-val">70%</span>
+        </div>
+        <div class="setting-row">
+          <label>SFX Volume</label>
+          <input type="range" id="set-sfx" min="0" max="100" value="80" oninput="JDR.app.updateSetting('sfxVol',this.value)">
+          <span id="set-sfx-val">80%</span>
+        </div>
+        <div class="setting-row">
+          <label>Difficulty</label>
+          <select id="set-difficulty" onchange="JDR.app.updateSetting('difficulty',this.value)">
+            <option value="easy">Easy</option>
+            <option value="normal" selected>Normal</option>
+            <option value="hard">Hard</option>
+            <option value="insane">Insane</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <label>Show FPS</label>
+          <label class="toggle"><input type="checkbox" id="set-fps" onchange="JDR.app.updateSetting('showFps',this.checked)"><span class="toggle-slider"></span></label>
+        </div>
+        <div class="setting-row">
+          <label>Screen Shake</label>
+          <label class="toggle"><input type="checkbox" id="set-shake" checked onchange="JDR.app.updateSetting('screenShake',this.checked)"><span class="toggle-slider"></span></label>
+        </div>
+        <div class="setting-row">
+          <label>Particles</label>
+          <select id="set-particles" onchange="JDR.app.updateSetting('particles',this.value)">
+            <option value="high">High</option>
+            <option value="medium" selected>Medium</option>
+            <option value="low">Low</option>
+            <option value="off">Off</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="JDR.app.resetProgress()" style="margin-top:20px;background:#ff4444;">Reset Progress</button>
+      </div>
+    </div>
+
+    <!-- High Scores -->
+    <div id="scores-screen" class="screen">
+      <button class="btn-back" onclick="JDR.app.showScreen('main-menu')">← Back</button>
+      <div class="global-coins">
+        <span class="coin-icon">🪙</span>
+        <span class="coin-amount">0</span>
+      </div>
+      <h2 class="screen-title">High Scores</h2>
+      <div class="scores-panel glass-panel">
+        <table class="scores-table" id="scores-table">
+          <thead>
+            <tr><th>#</th><th>Score</th><th>Map</th><th>Dino</th><th>Date</th></tr>
+          </thead>
+          <tbody id="scores-body">
+            <tr><td colspan="5">No scores yet. Play to set records!</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="screen">
+      <canvas id="game-canvas"></canvas>
+      
+      <!-- HUD -->
+      <div id="hud">
+        <div class="hud-left">
+          <div class="hud-score">
+            <span class="hud-label">SCORE</span>
+            <span class="hud-value" id="hud-score">0</span>
+          </div>
+          <div class="hud-combo" id="hud-combo" style="display:none">
+            <span>COMBO x</span><span id="hud-combo-val">0</span>
+          </div>
+        </div>
+        <div class="hud-center">
+          <div class="hud-hi">
+            <span class="hud-label">HI</span>
+            <span class="hud-value" id="hud-hi">0</span>
+          </div>
+        </div>
+        <div class="hud-right">
+          <div class="hud-coins">
+            <span class="coin-icon">🪙</span>
+            <span id="hud-coins">0</span>
+          </div>
+          <div class="hud-powerup" id="hud-powerup" style="display:none">
+            <span id="hud-powerup-icon"></span>
+            <div class="powerup-timer" id="powerup-timer"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobile Controls -->
+      <div id="mobile-controls">
+        <div class="mobile-zone mobile-jump" id="mobile-jump">
+          <div class="zone-icon">↑</div>
+          <div class="zone-label">JUMP</div>
+        </div>
+        <div class="mobile-zone mobile-duck" id="mobile-duck">
+          <div class="zone-icon">↓</div>
+          <div class="zone-label">DUCK</div>
+        </div>
+      </div>
+
+      <!-- Player Labels (2P) -->
+      <div id="p1-label" class="player-label" style="display:none">P1</div>
+      <div id="p2-label" class="player-label" style="display:none">P2</div>
+
+      <!-- Pause Overlay -->
+      <div id="pause-overlay" class="overlay" style="display:none">
+        <div class="overlay-content glass-panel">
+          <h2>⏸ PAUSED</h2>
+          <button class="btn btn-primary" onclick="JDR.engine.resume()">Resume</button>
+          <button class="btn btn-secondary" onclick="JDR.engine.quit()">Quit to Menu</button>
+        </div>
+      </div>
+
+      <!-- Game Over Overlay -->
+      <div id="game-over-overlay" class="overlay" style="display:none">
+        <div class="overlay-content glass-panel game-over-panel">
+          <h2 class="game-over-title">GAME OVER</h2>
+          <div class="go-stats">
+            <div class="go-stat">
+              <span class="go-label">Score</span>
+              <span class="go-value" id="go-score">0</span>
+            </div>
+            <div class="go-stat">
+              <span class="go-label">Best</span>
+              <span class="go-value" id="go-best">0</span>
+            </div>
+            <div class="go-stat">
+              <span class="go-label">Coins</span>
+              <span class="go-value" id="go-coins">+0</span>
+            </div>
+            <div class="go-stat" id="go-new-best" style="display:none">
+              <span class="go-label go-newrecord">🏆 NEW RECORD!</span>
+            </div>
+          </div>
+          <div class="go-buttons">
+            <button class="btn btn-primary btn-lg" id="btn-retry" onclick="JDR.engine.restart()">
+              ↻ Play Again
+            </button>
+            <button class="btn btn-secondary" onclick="JDR.engine.quit()">
+              Menu
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Countdown -->
+      <div id="countdown" style="display:none">
+        <span id="countdown-num">3</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
