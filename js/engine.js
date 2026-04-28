@@ -270,6 +270,7 @@ JDR.engine={
 
   endGame:function(){
     this.gameOver=true;JDR.Audio.play('gameOver');
+    document.getElementById('game-screen').classList.remove('game-active');
     var bonus=this.combo>=JDR.CONFIG.COMBO_THRESHOLD?Math.floor(this.combo*JDR.CONFIG.COMBO_MULTIPLIER):0;
     var finalScore=this.score+bonus;
     JDR.SaveManager.addCoins(this.coinsCollected);
@@ -295,6 +296,7 @@ JDR.engine={
 
   quit:function(){
     this.running=false;this.paused=false;
+    document.getElementById('game-screen').classList.remove('game-active');
     document.getElementById('game-over-overlay').style.display='none';
     document.getElementById('pause-overlay').style.display='none';
     JDR.app.showScreen('main-menu');
