@@ -68,7 +68,11 @@ JDR.engine={
     document.getElementById('pause-overlay').style.display='none';
     document.getElementById('p1-label').style.display=mode===2?'block':'none';
     document.getElementById('p2-label').style.display=mode===2?'block':'none';
-    JDR.Audio.play('click');this.running=true;this.loop();
+    JDR.Audio.play('click');
+    if (!this.running) {
+      this.running = true;
+      this.loop();
+    }
   },
 
   makePlayer:function(d,x,gy,pn){
