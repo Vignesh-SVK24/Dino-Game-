@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Rajdhani:wght@500;600;700;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=4.1">
+  <link rel="stylesheet" href="style.css?v=4.3">
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
@@ -45,8 +45,11 @@
       </div>
 
       <div class="menu-buttons">
-        <button class="btn btn-primary btn-lg" id="btn-play" onclick="JDR.app.showScreen('mode-select')">
-          <span class="btn-icon">🏇</span> PLAY / EXPLORE
+        <button class="btn btn-primary btn-lg" id="btn-play" onclick="JDR.app.start3DSimulation({ freeRoam: true })">
+          <span class="btn-icon">🏇</span> PLAY NOW (3D FREE ROAM)
+        </button>
+        <button class="btn btn-secondary" id="btn-modes" onclick="JDR.app.showScreen('mode-select')">
+          <span class="btn-icon">🎮</span> GAME MODES & TIME TRIAL
         </button>
         <button class="btn btn-secondary" id="btn-multiplayer" onclick="JDR.app.showScreen('multiplayer-screen')">
           <span class="btn-icon">🌐</span> MULTIPLAYER SAFARI
@@ -478,27 +481,27 @@
   </div>
 
   <!-- Three.js 3D Engine & Loaders -->
-  <script src="js/libs/three.min.js?v=4.1"></script>
-  <script src="js/libs/OrbitControls.js?v=4.1"></script>
-  <script src="js/libs/GLTFLoader.js?v=4.1"></script>
+  <script src="js/libs/three.min.js?v=4.3"></script>
+  <script src="js/libs/OrbitControls.js?v=4.3"></script>
+  <script src="js/libs/GLTFLoader.js?v=4.3"></script>
 
   <!-- Game Core & 3D Simulation Modules -->
-  <script src="js/config.js?v=4.1"></script>
-  <script src="js/audio.js?v=4.1"></script>
-  <script src="js/audio3d.js?v=4.1"></script>
-  <script src="js/dino3d.js?v=4.1"></script>
-  <script src="js/player3d.js?v=4.1"></script>
-  <script src="js/world3d.js?v=4.1"></script>
-  <script src="js/camera3d.js?v=4.1"></script>
-  <script src="js/multiplayer3d.js?v=4.1"></script>
-  <script src="js/homeCinematic3d.js?v=4.1"></script>
-  <script src="js/simEngine.js?v=4.1"></script>
+  <script src="js/config.js?v=4.3"></script>
+  <script src="js/audio.js?v=4.3"></script>
+  <script src="js/audio3d.js?v=4.3"></script>
+  <script src="js/dino3d.js?v=4.3"></script>
+  <script src="js/player3d.js?v=4.3"></script>
+  <script src="js/world3d.js?v=4.3"></script>
+  <script src="js/camera3d.js?v=4.3"></script>
+  <script src="js/multiplayer3d.js?v=4.3"></script>
+  <script src="js/homeCinematic3d.js?v=4.3"></script>
+  <script src="js/simEngine.js?v=4.3"></script>
 
   <!-- Classic 2D Engine (Preserved) -->
-  <script src="js/renderer.js?v=4.1"></script>
-  <script src="js/engine.js?v=4.1"></script>
+  <script src="js/renderer.js?v=4.3"></script>
+  <script src="js/engine.js?v=4.3"></script>
 
   <!-- Application Coordinator & UI Controller -->
-  <script src="js/app.js?v=4.1"></script>
+  <script src="js/app.js?v=4.3"></script>
 </body>
 </html>

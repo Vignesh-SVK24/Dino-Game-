@@ -325,12 +325,19 @@ JDR.HomeCinematic3D = (function(){
     // Create Hero Explorer Rider
     var riderObj = JDR.Player3D.createPlayerMesh();
     heroRiderMesh = riderObj;
+    if (JDR.Player3D.PlayerController) {
+      try {
+        var riderCtrl = new JDR.Player3D.PlayerController(riderObj);
+        riderCtrl.setRidingPose();
+      } catch(e) {
+        console.warn("Could not set rider pose:", e);
+      }
+    }
 
     // Attach rider directly to dinosaur saddle mount anchor
     var anchor = dinoConf.mountAnchor || { x: 0, y: 3.1, z: 0.4 };
     heroRiderMesh.root.position.set(anchor.x, anchor.y, anchor.z);
     heroRiderMesh.root.scale.set(0.95, 0.95, 0.95);
-    heroRiderMesh.setRidingState(true);
     heroDinoMesh.root.add(heroRiderMesh.root);
 
     // Position Hero Group on the overlook cliff
@@ -346,6 +353,7 @@ JDR.HomeCinematic3D = (function(){
 
   function start(){
     if (!renderer) init();
+    if (canvas) canvas.style.display = 'block';
     if (isRunning) return;
     isRunning = true;
     lastTime = performance.now();
@@ -354,6 +362,7 @@ JDR.HomeCinematic3D = (function(){
 
   function stop(){
     isRunning = false;
+    if (canvas) canvas.style.display = 'none';
     if (animId) {
       cancelAnimationFrame(animId);
       animId = null;
@@ -379,24 +388,26 @@ JDR.HomeCinematic3D = (function(){
     camera.lookAt(0.5, 2.3, 0);
 
     // Hero Dinosaur Idle Breathing & Animation
-    if (heroDinoMesh) {
+    var p = heroDinoMesh ? (heroDinoMesh.parts || heroDinoMesh) : null;
+    if (p) {
       var breath = Math.sin(time * 2.2);
-      if (heroDinoMesh.spine) {
-        heroDinoMesh.spine.scale.y = 1.0 + breath * 0.025;
-        heroDinoMesh.spine.rotation.x = Math.sin(time * 1.4) * 0.03;
+      if (p.spine) {
+        p.spine.scale.y = 1.0 + breath * 0.025;
+        p.spine.rotation.x = Math.sin(time * 1.4) * 0.03;
       }
-      if (heroDinoMesh.tail) {
-        heroDinoMesh.tail.rotation.y = Math.sin(time * 1.6) * 0.08;
+      if (p.tail) {
+        p.tail.rotation.y = Math.sin(time * 1.6) * 0.08;
       }
-      if (heroDinoMesh.neck) {
-        heroDinoMesh.neck.rotation.x = -0.05 + Math.sin(time * 1.2) * 0.04;
-        heroDinoMesh.neck.rotation.y = Math.sin(time * 0.8) * 0.05;
+      if (p.neck) {
+        p.neck.rotation.x = -0.05 + Math.sin(time * 1.2) * 0.04;
+        p.neck.rotation.y = Math.sin(time * 0.8) * 0.05;
       }
     }
 
     // Hero Rider Gentle Sway
-    if (heroRiderMesh && heroRiderMesh.torso) {
-      heroRiderMesh.torso.rotation.x = Math.sin(time * 2.2) * 0.03;
+    var rp = heroRiderMesh ? (heroRiderMesh.parts || heroRiderMesh) : null;
+    if (rp && rp.torso) {
+      rp.torso.rotation.x = Math.sin(time * 2.2) * 0.03;
     }
 
     // Waterfall Mist Animation

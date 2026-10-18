@@ -10,14 +10,18 @@ JDR.app = {
   previewAnimId: null,
 
   init: function(){
-    JDR.Audio.init();
-    JDR.Audio3D.init();
-    JDR.SaveManager.load();
-    JDR.engine.init(); // 2D runner engine
-    JDR.simEngine.init(); // 3D simulator master engine
-    if (JDR.HomeCinematic3D) JDR.HomeCinematic3D.init();
+    try { JDR.Audio.init(); } catch(e){ console.warn("Audio init:", e); }
+    try { JDR.Audio3D.init(); } catch(e){ console.warn("Audio3D init:", e); }
+    try { JDR.SaveManager.load(); } catch(e){ console.warn("SaveManager init:", e); }
+    try { JDR.engine.init(); } catch(e){ console.warn("engine init:", e); }
+    try { JDR.simEngine.init(); } catch(e){ console.warn("simEngine init:", e); }
+    try {
+      if (JDR.HomeCinematic3D) JDR.HomeCinematic3D.init();
+    } catch(e) {
+      console.warn("HomeCinematic3D init:", e);
+    }
 
-    this.setupControls();
+    try { this.setupControls(); } catch(e){ console.warn("setupControls error:", e); }
     this.fakeLoad();
   },
 
@@ -33,18 +37,34 @@ JDR.app = {
     ];
     var p = 0;
     var self = this;
+    var completed = false;
+
+    function finish() {
+      if (completed) return;
+      completed = true;
+      if (bar) bar.style.width = '100%';
+      if (txt) txt.textContent = 'Ready for Adventure!';
+      setTimeout(function(){
+        self.showScreen('main-menu');
+      }, 300);
+    }
+
     var iv = setInterval(function(){
-      p += Math.random() * 20 + 8;
+      p += Math.random() * 25 + 15;
       if (p > 100) p = 100;
       if (bar) bar.style.width = p + '%';
       if (txt) txt.textContent = msgs[Math.min(Math.floor((p / 100) * msgs.length), msgs.length - 1)];
       if (p >= 100) {
         clearInterval(iv);
-        setTimeout(function(){
-          self.showScreen('main-menu');
-        }, 450);
+        finish();
       }
-    }, 180);
+    }, 120);
+
+    // Guaranteed fallback: never get stuck on loading screen longer than 1.8s
+    setTimeout(function(){
+      clearInterval(iv);
+      finish();
+    }, 1800);
   },
 
   showScreen: function(id){
@@ -107,14 +127,23 @@ JDR.app = {
 
   // Launch the Flagship 3D Dinosaur Riding Simulation
   start3DSimulation: function(options){
-    if (JDR.HomeCinematic3D) JDR.HomeCinematic3D.stop();
+    try {
+      if (JDR.HomeCinematic3D) JDR.HomeCinematic3D.stop();
+    } catch(e) {
+      console.warn("HomeCinematic stop error:", e);
+    }
+
     document.querySelectorAll('.screen').forEach(function(s){
       s.classList.remove('active');
       s.style.display = 'none';
+      s.style.opacity = '0';
     });
+
     var screen3D = document.getElementById('game-3d-screen');
     if (screen3D) {
+      screen3D.classList.add('active');
       screen3D.style.display = 'block';
+      screen3D.style.opacity = '1';
       this.currentScreen = 'game-3d-screen';
     }
 
@@ -478,7 +507,7 @@ JDR.app = {
     window.addEventListener('keydown', function(e){
       if (self.currentScreen === 'main-menu' && (e.code === 'Space' || e.code === 'Enter')) {
         e.preventDefault();
-        self.showScreen('mode-select');
+        self.start3DSimulation({ freeRoam: true });
       }
     });
 
