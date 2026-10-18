@@ -88,6 +88,7 @@ JDR.app = {
     if (id === 'shop-screen') this.renderShop();
     if (id === 'scores-screen') this.renderScores();
     if (id === 'settings-screen') this.loadSettings();
+    this.checkOrientationPrompt();
   },
 
   updateCoins: function(){
@@ -116,6 +117,13 @@ JDR.app = {
       screen3D.style.display = 'block';
       this.currentScreen = 'game-3d-screen';
     }
+
+    // Attempt orientation lock on supported mobile devices
+    if (screen.orientation && screen.orientation.lock) {
+      screen.orientation.lock('landscape').catch(function(){});
+    }
+    this.checkOrientationPrompt();
+
     JDR.simEngine.start(options);
   },
 
@@ -464,7 +472,7 @@ JDR.app = {
     this.start3DSimulation({ multiplayer: true });
   },
 
-  // ==================== CONTROLS SETUP ====================
+  // ==================== CONTROLS & RESPONSIVE SETUP ====================
   setupControls: function(){
     var self = this;
     window.addEventListener('keydown', function(e){
@@ -473,15 +481,82 @@ JDR.app = {
         self.showScreen('mode-select');
       }
     });
+
+    // Listen to Fullscreen changes across all browser vendor variants
+    var fsChangeEvents = ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'];
+    fsChangeEvents.forEach(function(evt){
+      document.addEventListener(evt, function(){
+        self.onFullscreenChanged();
+      });
+    });
+
+    // Orientation checking for mobile gameplay
+    window.addEventListener('resize', function(){
+      self.checkOrientationPrompt();
+    });
+    window.addEventListener('orientationchange', function(){
+      setTimeout(function(){
+        self.checkOrientationPrompt();
+      }, 150);
+    });
+  },
+
+  checkOrientationPrompt: function(){
+    var promptEl = document.getElementById('orientation-prompt');
+    if (!promptEl) return;
+    var isGameActive = (this.currentScreen === 'game-3d-screen' || this.currentScreen === 'game-screen');
+    var isPortrait = window.innerHeight > window.innerWidth;
+    var isMobileWidth = window.innerWidth < 900;
+
+    if (isGameActive && isPortrait && isMobileWidth) {
+      promptEl.style.display = 'flex';
+      document.body.classList.add('show-orientation-prompt');
+    } else {
+      promptEl.style.display = 'none';
+      document.body.classList.remove('show-orientation-prompt');
+    }
+  },
+
+  onFullscreenChanged: function(){
+    var isFs = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+    if (isFs) {
+      document.body.classList.add('is-fullscreen');
+    } else {
+      document.body.classList.remove('is-fullscreen');
+    }
+
+    var hudBtn = document.getElementById('hud-btn-fullscreen');
+    if (hudBtn) hudBtn.textContent = isFs ? '✕' : '⛶';
+
+    var pauseBtn = document.getElementById('pause-btn-fullscreen');
+    if (pauseBtn) pauseBtn.textContent = isFs ? '✕ Exit Fullscreen' : '⛶ Fullscreen';
+
+    // Trigger canvas & camera aspect resize
+    setTimeout(function(){
+      if (JDR.simEngine) JDR.simEngine.onWindowResize();
+    }, 100);
   },
 
   toggleFullscreen: function(){
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(function(e){
-        console.warn('Fullscreen unavailable:', e);
-      });
+    var doc = document.documentElement;
+    var isFs = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+
+    if (!isFs) {
+      var requestMethod = doc.requestFullscreen || doc.webkitRequestFullscreen || doc.mozRequestFullScreen || doc.msRequestFullscreen;
+      if (requestMethod) {
+        requestMethod.call(doc).catch(function(e){
+          console.warn('Fullscreen request rejected:', e);
+        });
+      }
+      // Attempt screen orientation lock on supported mobile browsers
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('landscape').catch(function(){});
+      }
     } else {
-      document.exitFullscreen();
+      var exitMethod = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+      if (exitMethod) {
+        exitMethod.call(document);
+      }
     }
   }
 };

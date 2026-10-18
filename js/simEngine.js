@@ -298,7 +298,13 @@ JDR.simEngine = (function(){
       moveForward += joystickVec.y;
     }
 
-    var inputMagnitude = Math.min(1.0, Math.sqrt(moveForward * moveForward + moveSide * moveSide));
+    // Normalize diagonal input so diagonal is not faster
+    var rawMag = Math.sqrt(moveForward * moveForward + moveSide * moveSide);
+    if (rawMag > 1.0) {
+      moveSide /= rawMag;
+      moveForward /= rawMag;
+    }
+    var inputMagnitude = Math.min(1.0, rawMag);
     var isSprinting = keys.sprint;
 
     // Movement direction in world space oriented with camera angle
@@ -390,13 +396,19 @@ JDR.simEngine = (function(){
       var distToDino = dPos.distanceTo(pPos);
 
       var promptEl = document.getElementById('hud-prompt');
-      if (promptEl) {
-        if (distToDino < (JDR.CONFIG.SIM_3D.INTERACTION_RADIUS || 5.5)) {
+      var mBtnMount = document.getElementById('m-btn-mount');
+      if (distToDino < (JDR.CONFIG.SIM_3D.INTERACTION_RADIUS || 5.5)) {
+        if (promptEl) {
           promptEl.style.display = 'flex';
-          promptEl.innerHTML = '<span class="clay-badge">E</span> Mount ' + dinoCtrl.config.name;
-        } else {
-          promptEl.style.display = 'none';
+          promptEl.innerHTML = '<span class="adventure-badge">E</span> Mount ' + dinoCtrl.config.name;
         }
+        if (mBtnMount) {
+          mBtnMount.style.display = 'flex';
+          mBtnMount.innerHTML = '🏇 MOUNT';
+        }
+      } else {
+        if (promptEl) promptEl.style.display = 'none';
+        if (mBtnMount) mBtnMount.style.display = 'none';
       }
 
       // Dinosaur grazes / breathes in companion idle
@@ -460,9 +472,16 @@ JDR.simEngine = (function(){
 
     // Mount / Dismount button prompt
     var promptEl = document.getElementById('hud-prompt');
-    if (promptEl && playerCtrl.isMounted) {
-      promptEl.style.display = 'flex';
-      promptEl.innerHTML = '<span class="clay-badge">E</span> Press E to Dismount';
+    var mBtnMount = document.getElementById('m-btn-mount');
+    if (playerCtrl && playerCtrl.isMounted) {
+      if (promptEl) {
+        promptEl.style.display = 'flex';
+        promptEl.innerHTML = '<span class="adventure-badge">E</span> Press E to Dismount';
+      }
+      if (mBtnMount) {
+        mBtnMount.style.display = 'flex';
+        mBtnMount.innerHTML = '🏇 DISMOUNT';
+      }
     }
   }
 
@@ -540,6 +559,7 @@ JDR.simEngine = (function(){
     var maxRadius = 45;
 
     jZone.addEventListener('touchstart', function(e){
+      e.preventDefault();
       var t = e.changedTouches[0];
       touchId = t.identifier;
       var rect = jZone.getBoundingClientRect();
@@ -548,11 +568,13 @@ JDR.simEngine = (function(){
       handleJoystickMove(t.clientX, t.clientY);
     }, { passive: false });
 
-    jZone.addEventListener('touchmove', function(e){
-      e.preventDefault();
+    // Track joystick movement at window level so dragging outside the zone still works
+    window.addEventListener('touchmove', function(e){
+      if (touchId === null) return;
       for (var i = 0; i < e.changedTouches.length; i++) {
         var t = e.changedTouches[i];
         if (t.identifier === touchId) {
+          e.preventDefault();
           handleJoystickMove(t.clientX, t.clientY);
           break;
         }
@@ -571,33 +593,56 @@ JDR.simEngine = (function(){
       joystickVec.set(dx / maxRadius, -dy / maxRadius);
     }
 
-    var endJoy = function(){
+    var endJoy = function(e){
+      if (touchId === null) return;
+      if (e && e.changedTouches) {
+        var found = false;
+        for (var i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === touchId) { found = true; break; }
+        }
+        if (!found) return;
+      }
       touchId = null;
       jKnob.style.transform = 'translate(0px, 0px)';
       joystickVec.set(0, 0);
     };
-    jZone.addEventListener('touchend', endJoy);
-    jZone.addEventListener('touchcancel', endJoy);
+
+    window.addEventListener('touchend', endJoy);
+    window.addEventListener('touchcancel', endJoy);
+
+    // Reset all input on visibility change, window blur, or tab switch
+    function resetAllInput(){
+      touchId = null;
+      jKnob.style.transform = 'translate(0px, 0px)';
+      joystickVec.set(0, 0);
+      keys.forward = false;
+      keys.backward = false;
+      keys.left = false;
+      keys.right = false;
+      keys.sprint = false;
+      keys.jump = false;
+    }
+    window.addEventListener('blur', resetAllInput);
+    document.addEventListener('visibilitychange', function(){
+      if (document.hidden) resetAllInput();
+    });
 
     // Mobile Action buttons
-    var btnJump = document.getElementById('m-btn-jump');
-    if (btnJump) {
-      btnJump.addEventListener('touchstart', function(e){ e.preventDefault(); keys.jump = true; });
-      btnJump.addEventListener('touchend', function(e){ e.preventDefault(); keys.jump = false; });
+    function bindMobileBtn(id, keyName, isToggle){
+      var btn = document.getElementById(id);
+      if (!btn) return;
+      if (isToggle) {
+        btn.addEventListener('touchstart', function(e){ e.preventDefault(); if (keyName === 'mount') toggleMount(); else performRoar(); });
+      } else {
+        btn.addEventListener('touchstart', function(e){ e.preventDefault(); keys[keyName] = true; });
+        btn.addEventListener('touchend', function(e){ e.preventDefault(); keys[keyName] = false; });
+        btn.addEventListener('touchcancel', function(e){ keys[keyName] = false; });
+      }
     }
-    var btnSprint = document.getElementById('m-btn-sprint');
-    if (btnSprint) {
-      btnSprint.addEventListener('touchstart', function(e){ e.preventDefault(); keys.sprint = true; });
-      btnSprint.addEventListener('touchend', function(e){ e.preventDefault(); keys.sprint = false; });
-    }
-    var btnMount = document.getElementById('m-btn-mount');
-    if (btnMount) {
-      btnMount.addEventListener('touchstart', function(e){ e.preventDefault(); toggleMount(); });
-    }
-    var btnRoar = document.getElementById('m-btn-roar');
-    if (btnRoar) {
-      btnRoar.addEventListener('touchstart', function(e){ e.preventDefault(); performRoar(); });
-    }
+    bindMobileBtn('m-btn-jump', 'jump', false);
+    bindMobileBtn('m-btn-sprint', 'sprint', false);
+    bindMobileBtn('m-btn-mount', 'mount', true);
+    bindMobileBtn('m-btn-roar', 'roar', true);
   }
 
   function togglePause(){

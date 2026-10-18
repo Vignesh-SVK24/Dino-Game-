@@ -1,12 +1,12 @@
 {
   "name": "Jurassic Dino Run",
   "short_name": "Dino Run",
-  "description": "Epic Jurassic Dinosaur Runner Game",
+  "description": "Jurassic Dino Run — 3D Dinosaur Riding Simulator in Anime Cinematic Style",
   "start_url": "./index.html",
-  "display": "standalone",
+  "display": "fullscreen",
   "orientation": "landscape",
-  "background_color": "#0a0b12",
-  "theme_color": "#f5a623",
+  "background_color": "#08111c",
+  "theme_color": "#102238",
   "icons": [
     {
       "src": "assets/jungle.png",

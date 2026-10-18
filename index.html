@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Rajdhani:wght@500;600;700;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=4.0">
+  <link rel="stylesheet" href="style.css?v=4.1">
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
@@ -318,12 +318,13 @@
             </div>
           </div>
 
-          <!-- Amber Coins & Pause Button -->
+          <!-- Amber Coins, Fullscreen & Pause Buttons -->
           <div class="hud-stats-group">
             <div class="hud-amber-pill">
               <span>💎</span>
               <span id="hud-amber-count">0</span>
             </div>
+            <button class="hud-btn-pause" onclick="JDR.app.toggleFullscreen()" title="Toggle Fullscreen" id="hud-btn-fullscreen">⛶</button>
             <button class="hud-btn-pause" onclick="JDR.simEngine.togglePause()" title="Pause">⏸</button>
           </div>
         </div>
@@ -331,14 +332,14 @@
         <!-- Center Proximity Interaction Prompt -->
         <div class="hud-prompt-container">
           <div class="hud-prompt-card" id="hud-prompt">
-            <span class="clay-badge">E</span> Press E to Ride
+            <span class="adventure-badge">E</span> Mount Dinosaur
           </div>
         </div>
 
         <!-- Bottom Bar -->
         <div class="hud-bottom-bar">
           <!-- Desktop Controls Reminder -->
-          <div class="clay-card" style="padding: 8px 16px; border-radius: 18px; font-weight: 700; font-size: 0.95rem;" id="desktop-controls-hint">
+          <div class="adventure-card" style="padding: 8px 16px; border-radius: 12px; font-weight: 700; font-size: 0.95rem;" id="desktop-controls-hint">
             <kbd>W/A/S/D</kbd> Move &nbsp; <kbd>SHIFT</kbd> Sprint &nbsp; <kbd>SPACE</kbd> Jump &nbsp; <kbd>E</kbd> Mount/Dismount &nbsp; <kbd>R</kbd> Roar
           </div>
 
@@ -357,7 +358,7 @@
           <div id="joystick-knob"></div>
         </div>
 
-        <!-- Clay Action Buttons -->
+        <!-- Adventure Action Buttons -->
         <div class="mobile-action-cluster">
           <button class="mobile-action-btn mobile-btn-mount" id="m-btn-mount">
             🏇 MOUNT / DISMOUNT
@@ -376,14 +377,22 @@
 
       <!-- 3D Simulator Pause Overlay -->
       <div id="sim-pause-overlay" class="overlay">
-        <div class="clay-card overlay-content">
-          <h2 style="font-size: 2.2rem; color: var(--clay-forest); margin-bottom: 20px;">⏸ SIMULATION PAUSED</h2>
+        <div class="adventure-card overlay-content">
+          <h2 style="font-size: 2.2rem; color: var(--sunlit-gold); margin-bottom: 20px;">⏸ SIMULATION PAUSED</h2>
           <div style="display: flex; flex-direction: column; gap: 14px;">
             <button class="btn btn-primary btn-lg" onclick="JDR.simEngine.resume()">Resume Ride</button>
+            <button class="btn btn-secondary" onclick="JDR.app.toggleFullscreen()" id="pause-btn-fullscreen">⛶ Fullscreen</button>
             <button class="btn btn-volcano" onclick="JDR.simEngine.performRoar()">Fearsome Roar</button>
             <button class="btn btn-secondary" onclick="JDR.simEngine.quit()">Quit to Menu</button>
           </div>
         </div>
+      </div>
+
+      <!-- Landscape Orientation Prompt for Mobile Gameplay -->
+      <div id="orientation-prompt" class="orientation-prompt">
+        <div class="orient-icon">🔄</div>
+        <h2>ROTATE YOUR DEVICE</h2>
+        <p>Please rotate to landscape orientation for optimal 3D dinosaur exploration</p>
       </div>
     </div>
 
@@ -469,27 +478,27 @@
   </div>
 
   <!-- Three.js 3D Engine & Loaders -->
-  <script src="js/libs/three.min.js?v=4.0"></script>
-  <script src="js/libs/OrbitControls.js?v=4.0"></script>
-  <script src="js/libs/GLTFLoader.js?v=4.0"></script>
+  <script src="js/libs/three.min.js?v=4.1"></script>
+  <script src="js/libs/OrbitControls.js?v=4.1"></script>
+  <script src="js/libs/GLTFLoader.js?v=4.1"></script>
 
   <!-- Game Core & 3D Simulation Modules -->
-  <script src="js/config.js?v=4.0"></script>
-  <script src="js/audio.js?v=4.0"></script>
-  <script src="js/audio3d.js?v=4.0"></script>
-  <script src="js/dino3d.js?v=4.0"></script>
-  <script src="js/player3d.js?v=4.0"></script>
-  <script src="js/world3d.js?v=4.0"></script>
-  <script src="js/camera3d.js?v=4.0"></script>
-  <script src="js/multiplayer3d.js?v=4.0"></script>
-  <script src="js/homeCinematic3d.js?v=4.0"></script>
-  <script src="js/simEngine.js?v=4.0"></script>
+  <script src="js/config.js?v=4.1"></script>
+  <script src="js/audio.js?v=4.1"></script>
+  <script src="js/audio3d.js?v=4.1"></script>
+  <script src="js/dino3d.js?v=4.1"></script>
+  <script src="js/player3d.js?v=4.1"></script>
+  <script src="js/world3d.js?v=4.1"></script>
+  <script src="js/camera3d.js?v=4.1"></script>
+  <script src="js/multiplayer3d.js?v=4.1"></script>
+  <script src="js/homeCinematic3d.js?v=4.1"></script>
+  <script src="js/simEngine.js?v=4.1"></script>
 
   <!-- Classic 2D Engine (Preserved) -->
-  <script src="js/renderer.js?v=4.0"></script>
-  <script src="js/engine.js?v=4.0"></script>
+  <script src="js/renderer.js?v=4.1"></script>
+  <script src="js/engine.js?v=4.1"></script>
 
   <!-- Application Coordinator & UI Controller -->
-  <script src="js/app.js?v=4.0"></script>
+  <script src="js/app.js?v=4.1"></script>
 </body>
 </html>

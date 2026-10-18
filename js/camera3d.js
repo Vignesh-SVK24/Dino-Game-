@@ -65,35 +65,63 @@ JDR.Camera3D = (function(){
       self.distance = Math.max(self.minDistance, Math.min(self.maxDistance, self.distance));
     }, { passive: true });
 
-    // Mobile Touch Drag for Camera
+    // Mobile Touch Drag for Camera with Multitouch Support
     var touchStartX = 0, touchStartY = 0;
+    self.cameraTouchId = null;
+
     window.addEventListener('touchstart', function(e){
-      if (e.touches.length === 1) {
-        var t = e.touches[0];
-        // Only trigger if not tapping interactive mobile joystick or action buttons
-        if (t.target && (t.target.closest('.mobile-action-btn') || t.target.closest('#joystick-zone'))) return;
-        touchStartX = t.clientX;
-        touchStartY = t.clientY;
-        self.isDragging = true;
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        var t = e.changedTouches[i];
+        // Ignore touches on interactive mobile controls, joystick, buttons, or HUD
+        if (t.target && (t.target.closest('.mobile-action-btn') || t.target.closest('#joystick-zone') || t.target.closest('#hud-3d') || t.target.closest('.hud-btn-pause') || t.target.closest('.btn'))) {
+          continue;
+        }
+        if (self.cameraTouchId === null) {
+          self.cameraTouchId = t.identifier;
+          touchStartX = t.clientX;
+          touchStartY = t.clientY;
+          self.isDragging = true;
+          break;
+        }
       }
     }, { passive: true });
 
     window.addEventListener('touchmove', function(e){
-      if (!self.isDragging || e.touches.length !== 1) return;
-      var t = e.touches[0];
-      var dx = t.clientX - touchStartX;
-      var dy = t.clientY - touchStartY;
-      touchStartX = t.clientX;
-      touchStartY = t.clientY;
+      if (!self.isDragging || self.cameraTouchId === null) return;
+      for (var i = 0; i < e.touches.length; i++) {
+        var t = e.touches[i];
+        if (t.identifier === self.cameraTouchId) {
+          var dx = t.clientX - touchStartX;
+          var dy = t.clientY - touchStartY;
+          touchStartX = t.clientX;
+          touchStartY = t.clientY;
 
-      self.yaw -= dx * (self.sensitivity * 1.5);
-      self.pitch += dy * (self.sensitivity * 1.5);
-      self.pitch = Math.max(self.minPitch, Math.min(self.maxPitch, self.pitch));
+          self.yaw -= dx * (self.sensitivity * 1.5);
+          self.pitch += dy * (self.sensitivity * 1.5);
+          self.pitch = Math.max(self.minPitch, Math.min(self.maxPitch, self.pitch));
+          break;
+        }
+      }
     }, { passive: true });
 
-    window.addEventListener('touchend', function(){
-      self.isDragging = false;
-    });
+    var endCameraTouch = function(e){
+      if (self.cameraTouchId === null) return;
+      if (e && e.changedTouches) {
+        for (var i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === self.cameraTouchId) {
+            self.cameraTouchId = null;
+            self.isDragging = false;
+            break;
+          }
+        }
+      } else {
+        self.cameraTouchId = null;
+        self.isDragging = false;
+      }
+    };
+
+    window.addEventListener('touchend', endCameraTouch, { passive: true });
+    window.addEventListener('touchcancel', endCameraTouch, { passive: true });
   };
 
   Camera3D.prototype.update = function(delta, focusPosition, world3D){
