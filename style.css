@@ -976,37 +976,122 @@ select {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  display: none;
+  display: block; /* Enabled so on-screen buttons are accessible across touch and pointer devices */
   z-index: 20;
 }
 
-#joystick-zone {
+/* Steering Cluster (Joystick + Left/Right Directional Buttons) */
+.mobile-steer-container {
   position: absolute;
-  bottom: 30px;
-  bottom: calc(30px + var(--sai-bottom));
-  left: 30px;
-  left: calc(30px + var(--sai-left));
-  width: 130px;
-  height: 130px;
+  bottom: 24px;
+  bottom: calc(24px + var(--sai-bottom));
+  left: 20px;
+  left: calc(20px + var(--sai-left));
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  pointer-events: none;
+}
+
+#joystick-zone {
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
-  background: rgba(16, 34, 56, 0.45);
-  backdrop-filter: blur(8px);
+  background: rgba(12, 28, 48, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 2px solid var(--border-cyan);
-  box-shadow: 0 0 20px rgba(101, 188, 235, 0.2);
+  box-shadow: 0 0 20px rgba(101, 188, 235, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
   pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
 }
 
+.joystick-indicator {
+  position: absolute;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.45);
+  pointer-events: none;
+  user-select: none;
+}
+.joy-up { top: 6px; }
+.joy-down { bottom: 6px; }
+.joy-left { left: 8px; }
+.joy-right { right: 8px; }
+
 #joystick-knob {
-  width: 58px;
-  height: 58px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(24, 76, 128, 0.9), rgba(12, 28, 48, 0.95));
+  background: radial-gradient(circle at 35% 35%, #4ea8de, #0c2847);
   box-shadow: 0 0 15px rgba(101, 188, 235, 0.5);
   border: 2px solid var(--sky-blue);
   pointer-events: none;
+  transition: transform 0.05s linear;
+}
+
+/* On-Screen Directional D-Pad Buttons (Left/Right/Forward/Backward) */
+.mobile-dpad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.dpad-middle-row {
+  display: flex;
+  gap: 6px;
+}
+
+.dpad-btn {
+  background: linear-gradient(135deg, rgba(16, 42, 70, 0.88), rgba(8, 20, 36, 0.95));
+  border: 1.5px solid var(--border-cyan);
+  border-radius: 12px;
+  color: var(--cloud-white);
+  font-family: var(--font-ui);
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 8px rgba(101, 188, 235, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  transition: transform 0.08s ease, background 0.08s ease, border-color 0.08s ease;
+}
+
+.dpad-btn:hover {
+  border-color: var(--sky-blue);
+}
+
+.dpad-btn:active, .dpad-btn.pressed {
+  background: linear-gradient(135deg, #1f6b9c, #103c68);
+  border-color: var(--sunlit-gold);
+  transform: scale(0.92);
+  box-shadow: 0 0 14px rgba(255, 200, 87, 0.6);
+}
+
+.dpad-up, .dpad-down {
+  width: 56px;
+  height: 40px;
+}
+
+.dpad-left, .dpad-right {
+  min-width: 66px;
+  height: 46px;
+  padding: 0 8px;
 }
 
 .mobile-action-cluster {
@@ -1595,11 +1680,15 @@ body.is-fullscreen .shop-coins {
   }
 
   /* Mobile control adjustments for small screens */
+  .mobile-steer-container {
+    bottom: calc(16px + var(--sai-bottom));
+    left: calc(12px + var(--sai-left));
+    gap: 8px;
+  }
+
   #joystick-zone {
-    width: 110px;
-    height: 110px;
-    bottom: calc(20px + var(--sai-bottom));
-    left: calc(16px + var(--sai-left));
+    width: 105px;
+    height: 105px;
   }
 
   #joystick-knob {
@@ -1820,11 +1909,15 @@ body.is-fullscreen .shop-coins {
   }
 
   /* Mobile controls landscape spacing */
+  .mobile-steer-container {
+    bottom: calc(12px + var(--sai-bottom));
+    left: calc(18px + var(--sai-left));
+    gap: 10px;
+  }
+
   #joystick-zone {
-    bottom: calc(16px + var(--sai-bottom));
-    left: calc(24px + var(--sai-left));
-    width: 110px;
-    height: 110px;
+    width: 105px;
+    height: 105px;
   }
 
   #joystick-knob {

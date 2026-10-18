@@ -327,7 +327,10 @@ JDR.simEngine = (function(){
         var diff = targetAngle - currentAngle;
         while (diff < -Math.PI) diff += Math.PI * 2;
         while (diff > Math.PI) diff -= Math.PI * 2;
-        dinoRoot.rotation.y += diff * Math.min(1.0, delta * (dinoCtrl.config.turnRate3D || 2.5));
+        // Fast, snappy, responsive turn rate so dinosaur steers toward target immediately
+        var baseTurnRate = dinoCtrl.config.turnRate3D || 2.8;
+        var effectiveTurnRate = Math.max(7.5, baseTurnRate * 2.5);
+        dinoRoot.rotation.y += diff * Math.min(1.0, delta * effectiveTurnRate);
       }
 
       // Dinosaur jump or flight
@@ -342,10 +345,20 @@ JDR.simEngine = (function(){
       // Update Dinosaur speed and procedural limbs
       dinoCtrl.update(delta, inputMagnitude, isSprinting, keys.jump, false, inWater);
 
-      // Move forward along dinosaur's facing direction
+      // Move in the intended direction (Right moves right, Left moves left, Forward moves forward)
       var speed = dinoCtrl.speed;
-      var moveStep = new THREE.Vector3(0, 0, speed * delta).applyAxisAngle(new THREE.Vector3(0, 1, 0), dinoRoot.rotation.y);
-      currentPos.add(moveStep);
+      if (speed > 0.01) {
+        var moveStep;
+        if (inputMagnitude > 0.05) {
+          // Direct movement along the camera-relative input vector
+          var moveDir = worldMoveVec.clone().normalize();
+          moveStep = moveDir.multiplyScalar(speed * delta);
+        } else {
+          // Coasting glide along current facing direction upon releasing input
+          moveStep = new THREE.Vector3(0, 0, speed * delta).applyAxisAngle(new THREE.Vector3(0, 1, 0), dinoRoot.rotation.y);
+        }
+        currentPos.add(moveStep);
+      }
 
       // Gravity and terrain height
       var terrainY = world3D ? world3D.getTerrainHeight(currentPos.x, currentPos.z) : 0;
@@ -549,15 +562,51 @@ JDR.simEngine = (function(){
     });
   }
 
+  var onScreenControlsVisible = true;
+  function toggleOnScreenControls(){
+    var ctrlEl = document.getElementById('mobile-3d-controls');
+    if (!ctrlEl) return;
+    onScreenControlsVisible = !onScreenControlsVisible;
+    ctrlEl.style.display = onScreenControlsVisible ? 'block' : 'none';
+  }
+
   function setupMobileControls(){
     var jZone = document.getElementById('joystick-zone');
     var jKnob = document.getElementById('joystick-knob');
     if (!jZone || !jKnob) return;
 
     var touchId = null;
+    var isMouseDraggingJoy = false;
     var startX = 0, startY = 0;
     var maxRadius = 45;
 
+    var activePointerId = null;
+
+    // Unified Pointer Events (Touch, Stylus, Mouse)
+    jZone.addEventListener('pointerdown', function(e){
+      e.preventDefault();
+      activePointerId = e.pointerId;
+      var rect = jZone.getBoundingClientRect();
+      startX = rect.left + rect.width / 2;
+      startY = rect.top + rect.height / 2;
+      handleJoystickMove(e.clientX, e.clientY);
+    });
+
+    window.addEventListener('pointermove', function(e){
+      if (activePointerId !== null) {
+        handleJoystickMove(e.clientX, e.clientY);
+      }
+    });
+
+    var endPointerJoy = function(e){
+      activePointerId = null;
+      jKnob.style.transform = 'translate(0px, 0px)';
+      joystickVec.set(0, 0);
+    };
+    window.addEventListener('pointerup', endPointerJoy);
+    window.addEventListener('pointercancel', endPointerJoy);
+
+    // Fallback Touch Listeners for legacy mobile browsers
     jZone.addEventListener('touchstart', function(e){
       e.preventDefault();
       var t = e.changedTouches[0];
@@ -568,7 +617,6 @@ JDR.simEngine = (function(){
       handleJoystickMove(t.clientX, t.clientY);
     }, { passive: false });
 
-    // Track joystick movement at window level so dragging outside the zone still works
     window.addEventListener('touchmove', function(e){
       if (touchId === null) return;
       for (var i = 0; i < e.changedTouches.length; i++) {
@@ -590,6 +638,7 @@ JDR.simEngine = (function(){
         dy = (dy / dist) * maxRadius;
       }
       jKnob.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
+      // dx > 0 is Right, dx < 0 is Left; -dy > 0 is Forward, -dy < 0 is Backward
       joystickVec.set(dx / maxRadius, -dy / maxRadius);
     }
 
@@ -613,6 +662,8 @@ JDR.simEngine = (function(){
     // Reset all input on visibility change, window blur, or tab switch
     function resetAllInput(){
       touchId = null;
+      activePointerId = null;
+      isMouseDraggingJoy = false;
       jKnob.style.transform = 'translate(0px, 0px)';
       joystickVec.set(0, 0);
       keys.forward = false;
@@ -621,28 +672,70 @@ JDR.simEngine = (function(){
       keys.right = false;
       keys.sprint = false;
       keys.jump = false;
+      document.querySelectorAll('.dpad-btn, .mobile-action-btn').forEach(function(b){
+        b.classList.remove('pressed');
+      });
     }
     window.addEventListener('blur', resetAllInput);
     document.addEventListener('visibilitychange', function(){
       if (document.hidden) resetAllInput();
     });
 
-    // Mobile Action buttons
-    function bindMobileBtn(id, keyName, isToggle){
+    // Multi-Input Universal Button Binder (Touch, Pointer, and Mouse)
+    function bindButton(id, keyName, isToggle){
       var btn = document.getElementById(id);
       if (!btn) return;
+
       if (isToggle) {
-        btn.addEventListener('touchstart', function(e){ e.preventDefault(); if (keyName === 'mount') toggleMount(); else performRoar(); });
+        var onTrigger = function(e){
+          if (e) { e.preventDefault(); e.stopPropagation(); }
+          if (keyName === 'mount') toggleMount();
+          else if (keyName === 'roar') performRoar();
+        };
+        btn.addEventListener('pointerdown', onTrigger);
+        btn.addEventListener('touchstart', onTrigger, { passive: false });
+        btn.addEventListener('click', onTrigger);
       } else {
-        btn.addEventListener('touchstart', function(e){ e.preventDefault(); keys[keyName] = true; });
-        btn.addEventListener('touchend', function(e){ e.preventDefault(); keys[keyName] = false; });
-        btn.addEventListener('touchcancel', function(e){ keys[keyName] = false; });
+        var onDown = function(e){
+          if (e) { e.preventDefault(); e.stopPropagation(); }
+          keys[keyName] = true;
+          btn.classList.add('pressed');
+        };
+        var onUp = function(e){
+          if (e) { e.preventDefault(); e.stopPropagation(); }
+          keys[keyName] = false;
+          btn.classList.remove('pressed');
+        };
+
+        // Pointer Events
+        btn.addEventListener('pointerdown', onDown);
+        btn.addEventListener('pointerup', onUp);
+        btn.addEventListener('pointercancel', onUp);
+        btn.addEventListener('pointerleave', onUp);
+
+        // Touch Events
+        btn.addEventListener('touchstart', onDown, { passive: false });
+        btn.addEventListener('touchend', onUp, { passive: false });
+        btn.addEventListener('touchcancel', onUp, { passive: false });
+
+        // Mouse Events
+        btn.addEventListener('mousedown', onDown);
+        btn.addEventListener('mouseup', onUp);
+        btn.addEventListener('mouseleave', onUp);
       }
     }
-    bindMobileBtn('m-btn-jump', 'jump', false);
-    bindMobileBtn('m-btn-sprint', 'sprint', false);
-    bindMobileBtn('m-btn-mount', 'mount', true);
-    bindMobileBtn('m-btn-roar', 'roar', true);
+
+    // Directional Steer Buttons: Left ◀ and Right ▶ (plus Forward and Backward)
+    bindButton('m-btn-left', 'left', false);
+    bindButton('m-btn-right', 'right', false);
+    bindButton('m-btn-up', 'forward', false);
+    bindButton('m-btn-down', 'backward', false);
+
+    // Adventure Action buttons
+    bindButton('m-btn-jump', 'jump', false);
+    bindButton('m-btn-sprint', 'sprint', false);
+    bindButton('m-btn-mount', 'mount', true);
+    bindButton('m-btn-roar', 'roar', true);
   }
 
   function togglePause(){
@@ -673,6 +766,7 @@ JDR.simEngine = (function(){
     quit: quit,
     toggleMount: toggleMount,
     performRoar: performRoar,
+    toggleOnScreenControls: toggleOnScreenControls,
     onAmberCollected: onAmberCollected,
     onLavaHazard: onLavaHazard,
     get currentDinoPos(){ return dinoInstance ? dinoInstance.root.position : new THREE.Vector3(); },

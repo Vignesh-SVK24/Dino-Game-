@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Rajdhani:wght@500;600;700;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=4.3">
+  <link rel="stylesheet" href="style.css?v=4.4">
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
@@ -321,12 +321,13 @@
             </div>
           </div>
 
-          <!-- Amber Coins, Fullscreen & Pause Buttons -->
+          <!-- Amber Coins, Fullscreen, On-Screen Controls & Pause Buttons -->
           <div class="hud-stats-group">
             <div class="hud-amber-pill">
               <span>💎</span>
               <span id="hud-amber-count">0</span>
             </div>
+            <button class="hud-btn-pause" onclick="JDR.simEngine.toggleOnScreenControls()" title="Toggle On-Screen Steering Buttons" id="hud-btn-controls">🎮</button>
             <button class="hud-btn-pause" onclick="JDR.app.toggleFullscreen()" title="Toggle Fullscreen" id="hud-btn-fullscreen">⛶</button>
             <button class="hud-btn-pause" onclick="JDR.simEngine.togglePause()" title="Pause">⏸</button>
           </div>
@@ -354,14 +355,31 @@
         </div>
       </div>
 
-      <!-- Mobile Touch On-Screen Controls -->
+      <!-- Mobile Touch & On-Screen Button Controls -->
       <div id="mobile-3d-controls">
-        <!-- Floating Virtual Joystick -->
-        <div id="joystick-zone">
-          <div id="joystick-knob"></div>
+        <!-- Left Side: Steering Cluster with Joystick and Left/Right Directional Buttons -->
+        <div class="mobile-steer-container">
+          <!-- Floating Virtual Joystick -->
+          <div id="joystick-zone" title="Move joystick left or right to steer">
+            <div id="joystick-knob"></div>
+            <div class="joystick-indicator joy-up">▲</div>
+            <div class="joystick-indicator joy-left">◀</div>
+            <div class="joystick-indicator joy-right">▶</div>
+            <div class="joystick-indicator joy-down">▼</div>
+          </div>
+
+          <!-- On-Screen Directional Buttons -->
+          <div class="mobile-dpad">
+            <button class="dpad-btn dpad-up" id="m-btn-up" aria-label="Forward">▲</button>
+            <div class="dpad-middle-row">
+              <button class="dpad-btn dpad-left" id="m-btn-left" aria-label="Move Left">◀ LEFT</button>
+              <button class="dpad-btn dpad-right" id="m-btn-right" aria-label="Move Right">RIGHT ▶</button>
+            </div>
+            <button class="dpad-btn dpad-down" id="m-btn-down" aria-label="Backward">▼</button>
+          </div>
         </div>
 
-        <!-- Adventure Action Buttons -->
+        <!-- Right Side: Adventure Action Buttons -->
         <div class="mobile-action-cluster">
           <button class="mobile-action-btn mobile-btn-mount" id="m-btn-mount">
             🏇 MOUNT / DISMOUNT
@@ -481,27 +499,27 @@
   </div>
 
   <!-- Three.js 3D Engine & Loaders -->
-  <script src="js/libs/three.min.js?v=4.3"></script>
-  <script src="js/libs/OrbitControls.js?v=4.3"></script>
-  <script src="js/libs/GLTFLoader.js?v=4.3"></script>
+  <script src="js/libs/three.min.js?v=4.4"></script>
+  <script src="js/libs/OrbitControls.js?v=4.4"></script>
+  <script src="js/libs/GLTFLoader.js?v=4.4"></script>
 
   <!-- Game Core & 3D Simulation Modules -->
-  <script src="js/config.js?v=4.3"></script>
-  <script src="js/audio.js?v=4.3"></script>
-  <script src="js/audio3d.js?v=4.3"></script>
-  <script src="js/dino3d.js?v=4.3"></script>
-  <script src="js/player3d.js?v=4.3"></script>
-  <script src="js/world3d.js?v=4.3"></script>
-  <script src="js/camera3d.js?v=4.3"></script>
-  <script src="js/multiplayer3d.js?v=4.3"></script>
-  <script src="js/homeCinematic3d.js?v=4.3"></script>
-  <script src="js/simEngine.js?v=4.3"></script>
+  <script src="js/config.js?v=4.4"></script>
+  <script src="js/audio.js?v=4.4"></script>
+  <script src="js/audio3d.js?v=4.4"></script>
+  <script src="js/dino3d.js?v=4.4"></script>
+  <script src="js/player3d.js?v=4.4"></script>
+  <script src="js/world3d.js?v=4.4"></script>
+  <script src="js/camera3d.js?v=4.4"></script>
+  <script src="js/multiplayer3d.js?v=4.4"></script>
+  <script src="js/homeCinematic3d.js?v=4.4"></script>
+  <script src="js/simEngine.js?v=4.4"></script>
 
   <!-- Classic 2D Engine (Preserved) -->
-  <script src="js/renderer.js?v=4.3"></script>
-  <script src="js/engine.js?v=4.3"></script>
+  <script src="js/renderer.js?v=4.4"></script>
+  <script src="js/engine.js?v=4.4"></script>
 
   <!-- Application Coordinator & UI Controller -->
-  <script src="js/app.js?v=4.3"></script>
+  <script src="js/app.js?v=4.4"></script>
 </body>
 </html>
