@@ -107,6 +107,7 @@ JDR.app = {
     if (id === 'map-select') this.renderMaps();
     if (id === 'shop-screen') this.renderShop();
     if (id === 'scores-screen') this.renderScores();
+    if (id === 'missions-screen') this.renderMissions();
     if (id === 'settings-screen') this.loadSettings();
     this.checkOrientationPrompt();
   },
@@ -154,6 +155,11 @@ JDR.app = {
     this.checkOrientationPrompt();
 
     JDR.simEngine.start(options);
+
+    // Show skippable first-time onboarding tutorial if not yet completed
+    if (JDR.SaveManager.data && !JDR.SaveManager.data.tutorialCompleted) {
+      this.showTutorial(false);
+    }
   },
 
   // Launch the Classic 2D Arcade Runner (Preserved)
@@ -285,10 +291,14 @@ JDR.app = {
       var jumpPct = Math.round((d.jumpImpulse3D / 16) * 100);
       var massLabel = d.mass3D > 1000 ? (d.mass3D / 1000).toFixed(1) + ' Tons' : d.mass3D + ' kg';
 
+      var gripPct = Math.round(((d.terrainGrip || 1.0) / 1.5) * 100);
+      var mudPct = Math.round(((d.mudResistance || 1.0) / 1.6) * 100);
+
       statsEl.innerHTML =
         '<div class="stat-bar"><label>Sprint Speed (' + Math.round(d.sprintSpeed3D * 3.6) + ' km/h)</label><div class="bar"><div class="bar-fill" style="width:' + speedPct + '%; background:#E98243"></div></div></div>' +
         '<div class="stat-bar"><label>Stamina Capacity</label><div class="bar"><div class="bar-fill" style="width:' + stamPct + '%; background:#527A46"></div></div></div>' +
-        '<div class="stat-bar"><label>Leap Impulse</label><div class="bar"><div class="bar-fill" style="width:' + jumpPct + '%; background:#9CCFE0"></div></div></div>' +
+        '<div class="stat-bar"><label>Terrain Grip & Stability</label><div class="bar"><div class="bar-fill" style="width:' + gripPct + '%; background:#ffd700"></div></div></div>' +
+        '<div class="stat-bar"><label>Mud & Hazard Traction</label><div class="bar"><div class="bar-fill" style="width:' + mudPct + '%; background:#9CCFE0"></div></div></div>' +
         '<div style="display:flex; justify-content:space-between; margin-top:8px; font-weight:700; font-size:0.9rem; color:#63503f;">' +
         '<span>Mass: ' + massLabel + '</span>' +
         '<span>' + (d.canSwim ? '🏊 Swimmer' : (d.canFly ? '🪶 Flier' : 'Terrestrial')) + '</span>' +
@@ -412,19 +422,130 @@ JDR.app = {
     });
   },
 
+  renderMissions: function(){
+    var s = JDR.SaveManager.data;
+    var list = document.getElementById('missions-list');
+    var countEl = document.getElementById('missions-count');
+    var landmarksList = document.getElementById('landmarks-list');
+    if (!list) return;
+
+    var completed = s.missionsCompleted || [];
+    if (countEl) countEl.textContent = completed.length + ' / ' + (JDR.MISSIONS ? JDR.MISSIONS.length : 7) + ' Completed';
+
+    list.innerHTML = '';
+    if (JDR.MISSIONS) {
+      JDR.MISSIONS.forEach(function(m){
+        var isDone = completed.indexOf(m.id) >= 0;
+        var card = document.createElement('div');
+        card.className = 'clay-card mission-card' + (isDone ? ' completed' : '');
+        card.style.padding = '14px 18px';
+        card.style.display = 'flex';
+        card.style.justifyContent = 'space-between';
+        card.style.alignItems = 'center';
+        card.style.background = isDone ? 'rgba(39, 122, 73, 0.28)' : 'var(--clay-card-inner)';
+        card.style.border = isDone ? '1px solid rgba(117, 184, 90, 0.6)' : '1px solid rgba(255, 255, 255, 0.08)';
+        card.style.borderRadius = '14px';
+        card.style.marginBottom = '10px';
+
+        var left = document.createElement('div');
+        left.style.display = 'flex';
+        left.style.alignItems = 'center';
+        left.style.gap = '14px';
+        left.innerHTML = '<span style="font-size: 2.2rem;">' + m.icon + '</span>' +
+          '<div>' +
+          '<div style="font-size: 1.15rem; font-weight: 800; color: ' + (isDone ? 'var(--sunlit-gold)' : 'white') + ';">' + m.title + '</div>' +
+          '<div style="font-size: 0.9rem; color: #b8d2ea;">' + m.desc + '</div>' +
+          '</div>';
+
+        var right = document.createElement('div');
+        right.style.textAlign = 'right';
+        right.innerHTML = '<div style="font-weight: 800; color: #ffd700; font-size: 1.1rem;">💎 +' + m.reward + '</div>' +
+          '<div style="margin-top: 4px;"><span class="badge ' + (isDone ? 'badge-claimed' : 'badge-progress') + '">' + (isDone ? '✓ COMPLETED' : 'IN PROGRESS') + '</span></div>';
+
+        card.appendChild(left);
+        card.appendChild(right);
+        list.appendChild(card);
+      });
+    }
+
+    if (landmarksList && JDR.LANDMARKS) {
+      landmarksList.innerHTML = '';
+      var foundLandmarks = s.discoveredLandmarks || [];
+      JDR.LANDMARKS.forEach(function(lm){
+        var isFound = foundLandmarks.indexOf(lm.id) >= 0;
+        var lmCard = document.createElement('div');
+        lmCard.style.padding = '12px 16px';
+        lmCard.style.borderRadius = '12px';
+        lmCard.style.background = isFound ? 'rgba(18, 58, 98, 0.45)' : 'rgba(0,0,0,0.2)';
+        lmCard.style.border = isFound ? '1px solid var(--border-cyan-bright)' : '1px solid rgba(255,255,255,0.06)';
+        lmCard.style.marginBottom = '8px';
+        lmCard.style.display = 'flex';
+        lmCard.style.justifyContent = 'space-between';
+        lmCard.style.alignItems = 'center';
+
+        lmCard.innerHTML = '<div style="display:flex; align-items:center; gap:12px;">' +
+          '<span style="font-size:1.8rem;">' + lm.icon + '</span>' +
+          '<div>' +
+          '<div style="font-weight:700; color:' + (isFound ? 'var(--sky-blue)' : '#888') + ';">' + (isFound ? lm.name : '??? Uncharted Landmark') + '</div>' +
+          '<div style="font-size:0.85rem; color:#b8d2ea;">' + (isFound ? lm.desc : 'Explore ' + lm.mapId.toUpperCase() + ' biome to discover') + '</div>' +
+          '</div></div>' +
+          '<div><span class="badge ' + (isFound ? 'badge-claimed' : 'badge-progress') + '">' + (isFound ? 'DISCOVERED' : 'LOCKED') + '</span></div>';
+        landmarksList.appendChild(lmCard);
+      });
+    }
+  },
+
+  returnFromMissions: function(){
+    var game3D = document.getElementById('game-3d-screen');
+    if (game3D && game3D.classList.contains('active')) {
+      document.getElementById('missions-screen').classList.remove('active');
+      document.getElementById('missions-screen').style.display = 'none';
+      this.currentScreen = 'game-3d-screen';
+      if (JDR.simEngine) JDR.simEngine.resume();
+    } else {
+      this.showScreen('main-menu');
+    }
+  },
+
+  showTutorial: function(fromSettings){
+    var tut = document.getElementById('tutorial-overlay');
+    if (tut) tut.style.display = 'flex';
+  },
+
+  closeTutorial: function(){
+    var tut = document.getElementById('tutorial-overlay');
+    if (tut) tut.style.display = 'none';
+    if (JDR.SaveManager && JDR.SaveManager.data) {
+      JDR.SaveManager.data.tutorialCompleted = true;
+      JDR.SaveManager.save();
+    }
+  },
+
   loadSettings: function(){
     var s = JDR.SaveManager.data.settings;
     var setMusic = document.getElementById('set-music');
     var setMusicVal = document.getElementById('set-music-val');
     var setSfx = document.getElementById('set-sfx');
     var setSfxVal = document.getElementById('set-sfx-val');
+    var setGraphics = document.getElementById('set-graphics');
+    var setShadows = document.getElementById('set-shadows');
     var setCamDist = document.getElementById('set-cam-dist');
+    var setCamSens = document.getElementById('set-cam-sens');
+    var setCamSensVal = document.getElementById('set-cam-sens-val');
+    var setInvertY = document.getElementById('set-invert-y');
+    var setReducedMotion = document.getElementById('set-reduced-motion');
 
     if (setMusic) setMusic.value = s.musicVol;
     if (setMusicVal) setMusicVal.textContent = s.musicVol + '%';
     if (setSfx) setSfx.value = s.sfxVol;
     if (setSfxVal) setSfxVal.textContent = s.sfxVol + '%';
+    if (setGraphics && s.graphicsQuality) setGraphics.value = s.graphicsQuality;
+    if (setShadows) setShadows.checked = s.shadowsEnabled !== false;
     if (setCamDist) setCamDist.value = s.cameraDistance || 7.5;
+    if (setCamSens) setCamSens.value = s.cameraSensitivity !== undefined ? s.cameraSensitivity : 1.0;
+    if (setCamSensVal) setCamSensVal.textContent = (s.cameraSensitivity || 1.0).toFixed(1) + 'x';
+    if (setInvertY) setInvertY.checked = !!s.cameraInvertY;
+    if (setReducedMotion) setReducedMotion.checked = !!s.reducedMotion;
   },
 
   updateSetting: function(key, val){
@@ -440,8 +561,20 @@ JDR.app = {
     } else if (key === 'cameraDistance') {
       s.cameraDistance = parseFloat(val);
       JDR.CONFIG.SIM_3D.CAMERA_DEFAULT_DISTANCE = s.cameraDistance;
+    } else if (key === 'cameraSensitivity') {
+      s.cameraSensitivity = parseFloat(val);
+      var sensVal = document.getElementById('set-cam-sens-val');
+      if (sensVal) sensVal.textContent = s.cameraSensitivity.toFixed(1) + 'x';
+    } else if (key === 'cameraInvertY') {
+      s.cameraInvertY = !!val;
+    } else if (key === 'reducedMotion') {
+      s.reducedMotion = !!val;
+    } else if (key === 'shadowsEnabled') {
+      s.shadowsEnabled = !!val;
+      if (JDR.simEngine) JDR.simEngine.applyQualityPreset();
     } else if (key === 'graphicsQuality') {
       s.graphicsQuality = val;
+      if (JDR.simEngine) JDR.simEngine.applyQualityPreset();
     }
     JDR.SaveManager.save();
   },

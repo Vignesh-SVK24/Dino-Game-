@@ -101,6 +101,11 @@ JDR.World3D = (function(){
     this.collectibles = [];
     this.checkpoints = [];
     this.particles = null;
+    this.obstacles = [];      // Solid collision cylinders: { x, z, radius, height, type }
+    this.mudPatches = [];     // Mud slow patches: { x, z, radius }
+    this.treeMeshes = [];     // Animated swaying trees
+    this.wildlife = [];       // Mini-compies and soaring pterosaurs
+    this.landmarks = [];      // Exploration landmarks
     this.size = JDR.CONFIG.SIM_3D.TERRAIN_SIZE || 300;
     this.segments = JDR.CONFIG.SIM_3D.TERRAIN_SEGMENTS || 90;
 
@@ -142,11 +147,33 @@ JDR.World3D = (function(){
     return base;
   };
 
+  World3D.prototype.getTerrainNormal = function(x, z){
+    var eps = 1.2;
+    var hL = this.getTerrainHeight(x - eps, z);
+    var hR = this.getTerrainHeight(x + eps, z);
+    var hD = this.getTerrainHeight(x, z - eps);
+    var hU = this.getTerrainHeight(x, z + eps);
+    var norm = new THREE.Vector3(hL - hR, 2.0 * eps, hD - hU).normalize();
+    return norm;
+  };
+
+  World3D.prototype.isPlayerInMud = function(x, z){
+    for (var i = 0; i < this.mudPatches.length; i++) {
+      var mp = this.mudPatches[i];
+      var dx = x - mp.x, dz = z - mp.z;
+      if (dx * dx + dz * dz < mp.radius * mp.radius) return true;
+    }
+    return false;
+  };
+
   World3D.prototype.init = function(){
     this.buildTerrain();
     this.buildWaterOrLava();
     this.buildVegetationAndRocks();
+    this.buildMudAndLogs();
     this.buildCollectibles();
+    this.buildLandmarks();
+    this.buildWildlife();
     this.buildCheckpoints();
     this.buildAtmosphericParticles();
   };
@@ -227,7 +254,7 @@ JDR.World3D = (function(){
     var treeGroup = new THREE.Group();
     for (var t = 0; t < treeCount; t++) {
       var angle = Math.random() * Math.PI * 2;
-      var dist = 12 + Math.random() * (this.size * 0.38);
+      var dist = 14 + Math.random() * (this.size * 0.38);
       var x = Math.cos(angle) * dist;
       var z = Math.sin(angle) * dist;
       var y = this.getTerrainHeight(x, z);
@@ -256,6 +283,16 @@ JDR.World3D = (function(){
         tree.add(c2);
 
         treeGroup.add(tree);
+        this.treeMeshes.push(tree);
+
+        // Register solid obstacle for sliding collision
+        this.obstacles.push({
+          x: x,
+          z: z,
+          radius: 1.1 * tScale,
+          height: 5.5 * tScale,
+          type: 'tree'
+        });
       }
     }
     this.scene.add(treeGroup);
@@ -273,7 +310,7 @@ JDR.World3D = (function(){
     var rockGroup = new THREE.Group();
     for (var r = 0; r < rockCount; r++) {
       var rAngle = Math.random() * Math.PI * 2;
-      var rDist = 8 + Math.random() * (this.size * 0.4);
+      var rDist = 10 + Math.random() * (this.size * 0.4);
       var rx = Math.cos(rAngle) * rDist;
       var rz = Math.sin(rAngle) * rDist;
       var ry = this.getTerrainHeight(rx, rz);
@@ -286,6 +323,15 @@ JDR.World3D = (function(){
       rock.castShadow = true;
       rock.receiveShadow = true;
       rockGroup.add(rock);
+
+      // Register solid obstacle for sliding collision
+      this.obstacles.push({
+        x: rx,
+        z: rz,
+        radius: rScale * 1.35,
+        height: rScale * 1.8,
+        type: 'rock'
+      });
     }
     this.scene.add(rockGroup);
 
@@ -305,11 +351,66 @@ JDR.World3D = (function(){
           ribGroup.add(ribArch);
         }
         this.scene.add(ribGroup);
+        this.obstacles.push({ x: fx, z: fz, radius: 2.8, height: 4.0, type: 'fossil' });
       }
     }
   };
 
+  World3D.prototype.buildMudAndLogs = function(){
+    // Mud / Slowing swamp mire patches
+    var mudCount = 8;
+    var mudColor = this.map.biomeType === 'ice' ? 0x98b8c8 : (this.map.biomeType === 'volcano' ? 0x1f0d06 : 0x221a12);
+    var mudMat = new THREE.MeshStandardMaterial({
+      color: mudColor,
+      roughness: 0.95,
+      metalness: 0.04
+    });
+
+    for (var m = 0; m < mudCount; m++) {
+      var mAngle = (m / mudCount) * Math.PI * 2 + Math.random() * 0.4;
+      var mDist = 18 + Math.random() * (this.size * 0.32);
+      var mx = Math.cos(mAngle) * mDist;
+      var mz = Math.sin(mAngle) * mDist;
+      var my = this.getTerrainHeight(mx, mz);
+      var mRadius = 4.5 + Math.random() * 3.5;
+
+      var patchGeom = new THREE.CircleGeometry(mRadius, 14);
+      var patch = new THREE.Mesh(patchGeom, mudMat);
+      patch.rotateX(-Math.PI / 2);
+      patch.position.set(mx, my + 0.06, mz);
+      patch.receiveShadow = true;
+      this.scene.add(patch);
+
+      this.mudPatches.push({ x: mx, z: mz, radius: mRadius });
+    }
+
+    // Fallen Mossy / Petrified Logs
+    var logCount = 6;
+    var logGeom = new THREE.CylinderGeometry(0.5, 0.6, 7.2, 8);
+    var logColor = this.map.biomeType === 'ice' ? 0x3d4b54 : (this.map.biomeType === 'volcano' ? 0x1a120e : 0x2d1e12);
+    var logMat = new THREE.MeshStandardMaterial({ color: logColor, roughness: 0.88 });
+
+    for (var l = 0; l < logCount; l++) {
+      var lAngle = (l / logCount) * Math.PI * 2 + 0.6;
+      var lDist = 22 + Math.random() * (this.size * 0.3);
+      var lx = Math.cos(lAngle) * lDist;
+      var lz = Math.sin(lAngle) * lDist;
+      var ly = this.getTerrainHeight(lx, lz);
+
+      var log = new THREE.Mesh(logGeom, logMat);
+      log.rotateZ(Math.PI / 2);
+      log.rotation.y = Math.random() * Math.PI;
+      log.position.set(lx, ly + 0.45, lz);
+      log.castShadow = true;
+      log.receiveShadow = true;
+      this.scene.add(log);
+
+      this.obstacles.push({ x: lx, z: lz, radius: 1.8, height: 1.2, type: 'log' });
+    }
+  };
+
   World3D.prototype.buildCollectibles = function(){
+    // 1. Amber Gemstones (Worth 10)
     var amberGeom = new THREE.OctahedronGeometry(0.85, 0);
     var amberMat = new THREE.MeshStandardMaterial({
       color: 0xffaa00,
@@ -319,9 +420,9 @@ JDR.World3D = (function(){
       emissiveIntensity: 0.85
     });
 
-    var count = 35;
-    for (var i = 0; i < count; i++) {
-      var angle = (i / count) * Math.PI * 2 + (Math.random() * 0.3);
+    var amberCount = 26;
+    for (var i = 0; i < amberCount; i++) {
+      var angle = (i / amberCount) * Math.PI * 2 + (Math.random() * 0.3);
       var dist = 15 + Math.random() * (this.size * 0.35);
       var x = Math.cos(angle) * dist;
       var z = Math.sin(angle) * dist;
@@ -331,15 +432,220 @@ JDR.World3D = (function(){
       mesh.position.set(x, baseY + 1.6, z);
       this.scene.add(mesh);
 
-      var glow = new THREE.PointLight(0xff9900, 1.4, 9);
-      glow.position.set(0, 0, 0);
+      var glow = new THREE.PointLight(0xff9900, 1.2, 8);
       mesh.add(glow);
 
       this.collectibles.push({
+        type: 'amber',
+        value: 10,
         mesh: mesh,
         baseY: baseY + 1.6,
         collected: false,
         rotSpeed: 1.6 + Math.random()
+      });
+    }
+
+    // 2. Golden Prehistoric Dinosaur Eggs (Worth 50)
+    var eggGeom = new THREE.SphereGeometry(0.7, 12, 10);
+    eggGeom.scale(0.85, 1.25, 0.85);
+    var eggMat = new THREE.MeshStandardMaterial({
+      color: 0xffd700,
+      roughness: 0.22,
+      metalness: 0.65,
+      emissive: 0xb58000,
+      emissiveIntensity: 0.6
+    });
+
+    var eggCount = 5;
+    for (var e = 0; e < eggCount; e++) {
+      var eAngle = (e / eggCount) * Math.PI * 2 + 0.35;
+      var eDist = 30 + Math.random() * 65;
+      var ex = Math.cos(eAngle) * eDist;
+      var ez = Math.sin(eAngle) * eDist;
+      var eY = this.getTerrainHeight(ex, ez);
+
+      var eggMesh = new THREE.Mesh(eggGeom, eggMat);
+      eggMesh.position.set(ex, eY + 1.5, ez);
+      this.scene.add(eggMesh);
+
+      var eggLight = new THREE.PointLight(0xffcc00, 1.6, 10);
+      eggMesh.add(eggLight);
+
+      this.collectibles.push({
+        type: 'egg',
+        value: 50,
+        mesh: eggMesh,
+        baseY: eY + 1.5,
+        collected: false,
+        rotSpeed: 1.1
+      });
+    }
+
+    // 3. Ancient Fossil Relics (Worth 25)
+    var boneMat = new THREE.MeshStandardMaterial({
+      color: 0xf5eedb,
+      roughness: 0.4,
+      metalness: 0.15,
+      emissive: 0x3d3525,
+      emissiveIntensity: 0.25
+    });
+    var fossilGeom = new THREE.TorusGeometry(0.65, 0.2, 6, 12);
+
+    var fossilCount = 6;
+    for (var f = 0; f < fossilCount; f++) {
+      var fAngle = (f / fossilCount) * Math.PI * 2 + 0.8;
+      var fDist = 25 + Math.random() * 70;
+      var fx = Math.cos(fAngle) * fDist;
+      var fz = Math.sin(fAngle) * fDist;
+      var fY = this.getTerrainHeight(fx, fz);
+
+      var fossilMesh = new THREE.Mesh(fossilGeom, boneMat);
+      fossilMesh.position.set(fx, fY + 1.4, fz);
+      this.scene.add(fossilMesh);
+
+      this.collectibles.push({
+        type: 'fossil',
+        value: 25,
+        mesh: fossilMesh,
+        baseY: fY + 1.4,
+        collected: false,
+        rotSpeed: 1.4
+      });
+    }
+  };
+
+  World3D.prototype.buildLandmarks = function(){
+    var mapId = this.map.id;
+    var defs = JDR.LANDMARKS ? JDR.LANDMARKS.filter(function(l){ return l.mapId === mapId; }) : [];
+
+    for (var i = 0; i < defs.length; i++) {
+      var lm = defs[i];
+      var y = this.getTerrainHeight(lm.x, lm.z);
+      var lmGroup = new THREE.Group();
+      lmGroup.position.set(lm.x, y, lm.z);
+
+      // Landmark Beacon Pillar / Monument
+      var beaconMat = new THREE.MeshStandardMaterial({
+        color: 0x224255,
+        roughness: 0.45,
+        metalness: 0.7,
+        emissive: 0x257095,
+        emissiveIntensity: 0.5
+      });
+      var beaconMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1.4, 8.5, 6), beaconMat);
+      beaconMesh.position.y = 4.25;
+      beaconMesh.castShadow = true;
+      lmGroup.add(beaconMesh);
+
+      // Glowing Landmark Orb at Peak
+      var orbMat = new THREE.MeshStandardMaterial({
+        color: 0x65bceb,
+        emissive: 0x65bceb,
+        emissiveIntensity: 1.0,
+        roughness: 0.1
+      });
+      var orb = new THREE.Mesh(new THREE.SphereGeometry(1.2, 10, 8), orbMat);
+      orb.position.y = 9.2;
+      lmGroup.add(orb);
+
+      var orbLight = new THREE.PointLight(0x65bceb, 2.5, 25);
+      orbLight.position.y = 9.2;
+      lmGroup.add(orbLight);
+
+      this.scene.add(lmGroup);
+      this.obstacles.push({ x: lm.x, z: lm.z, radius: 2.2, height: 9.0, type: 'monument' });
+
+      var alreadyFound = JDR.SaveManager.data && JDR.SaveManager.data.discoveredLandmarks &&
+                         JDR.SaveManager.data.discoveredLandmarks.indexOf(lm.id) >= 0;
+
+      this.landmarks.push({
+        data: lm,
+        position: new THREE.Vector3(lm.x, y, lm.z),
+        mesh: lmGroup,
+        radius: lm.radius || 16,
+        discovered: alreadyFound
+      });
+    }
+  };
+
+  World3D.prototype.buildWildlife = function(){
+    // 1. Roaming Mini-Compies Herd (5 small grazing dinosaurs)
+    var compyMat = new THREE.MeshStandardMaterial({ color: 0x5a7e3d, roughness: 0.7 });
+    var eyeMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+
+    for (var c = 0; c < 5; c++) {
+      var angle = (c / 5) * Math.PI * 2 + Math.random() * 0.5;
+      var dist = 20 + Math.random() * 40;
+      var cx = Math.cos(angle) * dist;
+      var cz = Math.sin(angle) * dist;
+      var cy = this.getTerrainHeight(cx, cz);
+
+      var compy = new THREE.Group();
+      compy.position.set(cx, cy, cz);
+
+      // Body & Head
+      var cBody = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.22, 0.55), compyMat);
+      cBody.position.y = 0.45;
+      cBody.castShadow = true;
+      compy.add(cBody);
+
+      var cNeck = new THREE.Group();
+      cNeck.position.set(0, 0.52, 0.25);
+      var cHead = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.16, 0.28), compyMat);
+      cHead.position.set(0, 0.14, 0.1);
+      cNeck.add(cHead);
+      compy.add(cNeck);
+
+      // Tail
+      var cTail = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.65, 4), compyMat);
+      cTail.position.set(0, 0.48, -0.45);
+      cTail.rotation.x = -Math.PI / 2;
+      compy.add(cTail);
+
+      this.scene.add(compy);
+
+      this.wildlife.push({
+        type: 'compy',
+        group: compy,
+        neck: cNeck,
+        homeX: cx,
+        homeZ: cz,
+        pos: new THREE.Vector3(cx, cy, cz),
+        heading: Math.random() * Math.PI * 2,
+        state: 'graze',
+        fleeTimer: 0,
+        animOffset: Math.random() * 10
+      });
+    }
+
+    // 2. Soaring High-Altitude Pterosaurs (2 majestic sky gliders)
+    var pteraMat = new THREE.MeshStandardMaterial({ color: 0x7a5035, roughness: 0.65 });
+    for (var p = 0; p < 2; p++) {
+      var pGroup = new THREE.Group();
+      var pBody = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.4, 1.4), pteraMat);
+      pGroup.add(pBody);
+
+      var leftWing = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.08, 0.8), pteraMat);
+      leftWing.position.set(-1.6, 0, 0);
+      pGroup.add(leftWing);
+
+      var rightWing = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.08, 0.8), pteraMat);
+      rightWing.position.set(1.6, 0, 0);
+      pGroup.add(rightWing);
+
+      var alt = 36 + p * 12;
+      pGroup.position.set(0, alt, 0);
+      this.scene.add(pGroup);
+
+      this.wildlife.push({
+        type: 'pterosaur',
+        group: pGroup,
+        leftWing: leftWing,
+        rightWing: rightWing,
+        altitude: alt,
+        orbitRadius: 75 + p * 25,
+        speed: 0.35 + p * 0.15,
+        angle: p * Math.PI
       });
     }
   };
@@ -411,43 +717,126 @@ JDR.World3D = (function(){
   World3D.prototype.update = function(delta, playerPos){
     var time = Date.now() * 0.001;
 
-    // Animate water and lava glow pulsation
+    // 1. Animate water and lava glow pulsation
     if (this.map.isLava && this.lavaLight) {
       var pulse = Math.sin(time * 5.0) * 0.35 + 1.8;
       this.lavaLight.intensity = pulse;
       this.waterMaterial.emissiveIntensity = 0.7 + Math.sin(time * 4.0) * 0.2;
     }
 
-    // Animate collectibles
+    // 2. Animate vegetation wind sway
+    for (var tr = 0; tr < this.treeMeshes.length; tr++) {
+      var tree = this.treeMeshes[tr];
+      var sway = Math.sin(time * 2.2 + tree.position.x * 0.1) * 0.035;
+      if (tree.children[1]) tree.children[1].rotation.z = sway;
+      if (tree.children[2]) tree.children[2].rotation.z = sway * 1.5;
+    }
+
+    // 3. Animate and check collectibles (Amber, Eggs, Fossils)
     for (var i = 0; i < this.collectibles.length; i++) {
       var item = this.collectibles[i];
       if (!item.collected) {
         item.mesh.rotation.y += delta * item.rotSpeed;
-        item.mesh.position.y = item.baseY + Math.sin(time * 3.0 + i) * 0.35;
+        item.mesh.position.y = item.baseY + Math.sin(time * 3.0 + i) * 0.32;
 
         if (playerPos) {
           var dx = playerPos.x - item.mesh.position.x;
           var dz = playerPos.z - item.mesh.position.z;
           var dist = Math.sqrt(dx * dx + dz * dz);
-          if (dist < 2.5) {
+          if (dist < 2.6) {
             item.collected = true;
             this.scene.remove(item.mesh);
-            JDR.Audio3D.playAmberCollect();
-            if (JDR.SaveManager) {
-              JDR.SaveManager.addCoins(10);
-              if (JDR.SaveManager.data.explorationStats) {
-                JDR.SaveManager.data.explorationStats.amberCollected++;
+
+            if (item.type === 'egg') {
+              JDR.Audio3D.playEggCollect();
+              if (JDR.SaveManager) {
+                JDR.SaveManager.addCoins(item.value);
+                JDR.SaveManager.data.eggsCollected = (JDR.SaveManager.data.eggsCollected || 0) + 1;
               }
-            }
-            if (JDR.simEngine) {
-              JDR.simEngine.onAmberCollected();
+              if (JDR.simEngine) JDR.simEngine.onEggCollected();
+            } else if (item.type === 'fossil') {
+              JDR.Audio3D.playFossilCollect();
+              if (JDR.SaveManager) {
+                JDR.SaveManager.addCoins(item.value);
+                JDR.SaveManager.data.fossilsCollected = (JDR.SaveManager.data.fossilsCollected || 0) + 1;
+              }
+              if (JDR.simEngine) JDR.simEngine.onFossilCollected();
+            } else {
+              JDR.Audio3D.playAmberCollect();
+              if (JDR.SaveManager) {
+                JDR.SaveManager.addCoins(item.value);
+                if (JDR.SaveManager.data.explorationStats) {
+                  JDR.SaveManager.data.explorationStats.amberCollected++;
+                }
+              }
+              if (JDR.simEngine) JDR.simEngine.onAmberCollected();
             }
           }
         }
       }
     }
 
-    // Animate atmospheric particles
+    // 4. Check exploration landmarks discovery
+    if (playerPos) {
+      for (var l = 0; l < this.landmarks.length; l++) {
+        var lm = this.landmarks[l];
+        if (!lm.discovered) {
+          var ldx = playerPos.x - lm.position.x;
+          var ldz = playerPos.z - lm.position.z;
+          if (Math.sqrt(ldx * ldx + ldz * ldz) < lm.radius) {
+            lm.discovered = true;
+            if (JDR.SaveManager) {
+              JDR.SaveManager.discoverLandmark(lm.data);
+            }
+            if (JDR.simEngine) {
+              JDR.simEngine.onLandmarkDiscovered(lm.data);
+            }
+          }
+        }
+      }
+    }
+
+    // 5. Update Wildlife (Mini-compies & Pterosaurs)
+    for (var w = 0; w < this.wildlife.length; w++) {
+      var critter = this.wildlife[w];
+      if (critter.type === 'compy') {
+        var cPos = critter.pos;
+        var pDist = playerPos ? Math.sqrt(Math.pow(playerPos.x - cPos.x, 2) + Math.pow(playerPos.z - cPos.z, 2)) : 999;
+
+        if (pDist < 13.0) {
+          critter.state = 'flee';
+          critter.fleeTimer = 2.5;
+          // Run in opposite direction from player
+          critter.heading = Math.atan2(cPos.x - playerPos.x, cPos.z - playerPos.z);
+        }
+
+        if (critter.state === 'flee') {
+          critter.fleeTimer -= delta;
+          var fleeSpeed = 10.0;
+          cPos.x += Math.sin(critter.heading) * fleeSpeed * delta;
+          cPos.z += Math.cos(critter.heading) * fleeSpeed * delta;
+          cPos.y = this.getTerrainHeight(cPos.x, cPos.z);
+          critter.group.position.copy(cPos);
+          critter.group.rotation.y = critter.heading;
+          critter.neck.rotation.x = 0.4 + Math.sin(time * 16.0) * 0.15;
+          if (critter.fleeTimer <= 0) critter.state = 'graze';
+        } else {
+          // Graze and gentle head bob
+          critter.neck.rotation.x = 0.6 + Math.sin(time * 2.5 + critter.animOffset) * 0.28;
+        }
+      } else if (critter.type === 'pterosaur') {
+        critter.angle += delta * critter.speed;
+        var px = Math.cos(critter.angle) * critter.orbitRadius;
+        var pz = Math.sin(critter.angle) * critter.orbitRadius;
+        critter.group.position.set(px, critter.altitude + Math.sin(critter.angle * 2.0) * 3.5, pz);
+        critter.group.rotation.y = -critter.angle - Math.PI / 2;
+        var flap = Math.sin(time * 3.5) * 0.22;
+        critter.leftWing.rotation.z = flap;
+        critter.rightWing.rotation.z = -flap;
+      }
+    }
+
+    // 6. Animate atmospheric particles
     if (this.particles) {
       var pos = this.particles.geometry.attributes.position.array;
       for (var p = 0; p < pos.length / 3; p++) {
@@ -457,7 +846,7 @@ JDR.World3D = (function(){
       this.particles.geometry.attributes.position.needsUpdate = true;
     }
 
-    // Lava hazard check
+    // 7. Lava hazard check
     if (this.map.isLava && playerPos) {
       var curY = this.getTerrainHeight(playerPos.x, playerPos.z);
       if (curY <= this.map.waterLevel + 0.3) {

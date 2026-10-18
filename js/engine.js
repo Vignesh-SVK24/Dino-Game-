@@ -1,12 +1,59 @@
 var JDR=window.JDR||{};
 JDR.SaveManager={
   data:null,
-  load:function(){try{this.data=JSON.parse(localStorage.getItem('jdr_save'))||null;}catch(e){}
-    if(!this.data)this.data=JSON.parse(JSON.stringify(JDR.DEFAULT_SAVE));this.apply();},
+  load:function(){
+    try{this.data=JSON.parse(localStorage.getItem('jdr_save'))||null;}catch(e){}
+    var def=JSON.parse(JSON.stringify(JDR.DEFAULT_SAVE));
+    if(!this.data){
+      this.data=def;
+    } else {
+      // Deep merge defaults so new fields are never missing
+      for(var k in def){
+        if(this.data[k]===undefined) this.data[k]=def[k];
+      }
+      if(this.data.settings){
+        for(var sk in def.settings){
+          if(this.data.settings[sk]===undefined) this.data.settings[sk]=def.settings[sk];
+        }
+      }
+      if(this.data.explorationStats){
+        for(var ek in def.explorationStats){
+          if(this.data.explorationStats[ek]===undefined) this.data.explorationStats[ek]=def.explorationStats[ek];
+        }
+      }
+      if(!Array.isArray(this.data.missionsCompleted)) this.data.missionsCompleted=[];
+      if(!Array.isArray(this.data.discoveredLandmarks)) this.data.discoveredLandmarks=[];
+    }
+    this.apply();
+  },
   save:function(){try{localStorage.setItem('jdr_save',JSON.stringify(this.data));}catch(e){}},
   apply:function(){var d=this.data;JDR.DINOS.forEach(function(di){di.owned=d.ownedDinos.indexOf(di.id)>=0;});
     JDR.MAPS.forEach(function(m){m.unlocked=d.unlockedMaps.indexOf(m.id)>=0;});},
   addCoins:function(n){this.data.coins+=n;this.save();},
+  completeMission:function(id){
+    if(!this.data.missionsCompleted) this.data.missionsCompleted=[];
+    if(this.data.missionsCompleted.indexOf(id)<0){
+      this.data.missionsCompleted.push(id);
+      var mission=JDR.MISSIONS?JDR.MISSIONS.find(function(m){return m.id===id;}):null;
+      if(mission && mission.reward){
+        this.addCoins(mission.reward);
+      } else {
+        this.save();
+      }
+      return true;
+    }
+    return false;
+  },
+  discoverLandmark:function(landmark){
+    if(!this.data.discoveredLandmarks) this.data.discoveredLandmarks=[];
+    if(this.data.discoveredLandmarks.indexOf(landmark.id)<0){
+      this.data.discoveredLandmarks.push(landmark.id);
+      if(landmark.reward) this.addCoins(landmark.reward);
+      else this.save();
+      return true;
+    }
+    return false;
+  },
   reset:function(){localStorage.removeItem('jdr_save');this.load();}
 };
 

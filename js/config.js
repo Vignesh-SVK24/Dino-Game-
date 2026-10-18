@@ -482,11 +482,27 @@ JDR.DINOS = [
     canFly: true,
     roarSound: 'ptera',
     wings: true,
+    terrainGrip: 1.0,
+    mudResistance: 1.4, // Glides over mud
     w: 60, h: 44,
     body: { w: 40, h: 20 }, head: { w: 22, h: 14, jaw: 12 }, tail: 18, armLen: 14,
     legLen: 16, legW: 5, skin: 'leathery'
   }
 ];
+
+// Add terrain handling stats to other dinos
+JDR.DINOS.forEach(function(d){
+  if (d.terrainGrip === undefined) {
+    if (d.id === 'trex') { d.terrainGrip = 1.1; d.mudResistance = 0.9; }
+    else if (d.id === 'spino') { d.terrainGrip = 1.0; d.mudResistance = 1.6; } // Semi-aquatic master
+    else if (d.id === 'stego') { d.terrainGrip = 1.25; d.mudResistance = 1.1; } // Solid heavy grip
+    else if (d.id === 'diplo') { d.terrainGrip = 1.35; d.mudResistance = 1.5; } // Colossal stride ignores mud
+    else if (d.id === 'coelo') { d.terrainGrip = 0.85; d.mudResistance = 0.6; } // Light skitterer slowed by mud
+    else if (d.id === 'raptor') { d.terrainGrip = 1.05; d.mudResistance = 0.75; }
+    else if (d.id === 'ankylo') { d.terrainGrip = 1.4; d.mudResistance = 1.2; } // Unshakable low center of mass
+    else if (d.id === 'trice') { d.terrainGrip = 1.2; d.mudResistance = 1.0; }
+  }
+});
 
 JDR.POWERUPS = [
   { id: 'shield', name: 'Shield', icon: '🛡️', color: '#4ecdc4', duration: 300 },
@@ -497,8 +513,102 @@ JDR.POWERUPS = [
   { id: 'life', name: 'Extra Life', icon: '❤️', color: '#ff4466', duration: 0 }
 ];
 
+// Exploration Missions & Challenges
+JDR.MISSIONS = [
+  {
+    id: 'first_ride',
+    title: 'Primeval Pioneer',
+    desc: 'Ride any mounted dinosaur for at least 150 meters',
+    reward: 60,
+    icon: '🏇',
+    target: 150,
+    unit: 'm',
+    progressKey: 'distanceRiddenKm',
+    progressScale: 1000 // km to m
+  },
+  {
+    id: 'sprint_beast',
+    title: 'Sound Barrier',
+    desc: 'Reach a sprint speed of 45 km/h or higher',
+    reward: 80,
+    icon: '⚡',
+    target: 45,
+    unit: 'km/h',
+    type: 'speed'
+  },
+  {
+    id: 'fossil_hunter',
+    title: 'Fossil Archeologist',
+    desc: 'Discover 3 Ancient Fossil Relics across prehistoric biomes',
+    reward: 120,
+    icon: '🦴',
+    target: 3,
+    unit: 'fossils',
+    progressKey: 'fossilsCollected'
+  },
+  {
+    id: 'egg_thief',
+    title: 'Nest Raider',
+    desc: 'Collect 2 Prehistoric Dinosaur Golden Eggs',
+    reward: 150,
+    icon: '🪺',
+    target: 2,
+    unit: 'eggs',
+    progressKey: 'eggsCollected'
+  },
+  {
+    id: 'apex_roar',
+    title: 'Voice of the Wild',
+    desc: 'Unleash 3 fearsome dinosaur roars across the valley',
+    reward: 50,
+    icon: '🗣️',
+    target: 3,
+    unit: 'roars',
+    type: 'roars'
+  },
+  {
+    id: 'landmark_tour',
+    title: 'Ancient Cartographer',
+    desc: 'Discover 2 Unique Prehistoric Landmarks',
+    reward: 160,
+    icon: '🗺️',
+    target: 2,
+    unit: 'landmarks',
+    type: 'landmarks'
+  },
+  {
+    id: 'time_trial_pro',
+    title: 'Archway Champion',
+    desc: 'Pass through 4 stone archways in 3D Time Trial mode',
+    reward: 200,
+    icon: '⏱️',
+    target: 4,
+    unit: 'archways',
+    type: 'archways'
+  }
+];
+
+// Prehistoric Discovery Landmarks
+JDR.LANDMARKS = [
+  // Jungle
+  { id: 'jungle_falls', mapId: 'jungle', name: 'Emerald Falls', desc: 'A roaring turquoise waterfall cascading into a crystal river basin', x: -65, z: 45, radius: 16, icon: '🌊', reward: 75 },
+  { id: 'jungle_nest', mapId: 'jungle', name: 'Raptor Ridge Nest', desc: 'Elevated scenic cliff overlooking ancient cycad canopy', x: 55, z: -50, radius: 16, icon: '🪺', reward: 75 },
+  // Volcano
+  { id: 'volcano_caldera', mapId: 'volcano', name: 'Obsidian Caldera', desc: 'A smoking basalt fissure glowing with molten magma currents', x: -40, z: -55, radius: 16, icon: '🌋', reward: 75 },
+  { id: 'volcano_spire', mapId: 'volcano', name: 'Pterosaur Peak', desc: 'A towering obsidian needle cutting through volcanic ash skies', x: 60, z: 40, radius: 16, icon: '🪨', reward: 75 },
+  // Desert
+  { id: 'desert_ribs', mapId: 'desert', name: 'Titan Bone Arch', desc: 'Colossal ribcage of an ancient long-dead sauropod colossus', x: 0, z: 45, radius: 16, icon: '🦴', reward: 75 },
+  { id: 'desert_oasis', mapId: 'desert', name: 'Mirage Springs', desc: 'Lush spring oasis hidden within shifting amber sand dunes', x: -50, z: -40, radius: 16, icon: '🌴', reward: 75 },
+  // Ice
+  { id: 'ice_spire', mapId: 'ice', name: 'Glacial Crown', desc: 'Towering crystal ice monolith shining under arctic sunlight', x: -45, z: 50, radius: 16, icon: '❄️', reward: 75 },
+  { id: 'ice_cavern', mapId: 'ice', name: 'Mammoth Ravine', desc: 'Deep windswept snow passage surrounded by ancient frozen cliffs', x: 50, z: -45, radius: 16, icon: '🏔️', reward: 75 },
+  // Swamp
+  { id: 'swamp_shroom', mapId: 'swamp', name: 'Bioluminescent Grove', desc: 'Cluster of giant luminous mushrooms lighting up the dusk peat', x: -50, z: 35, radius: 16, icon: '🍄', reward: 75 },
+  { id: 'swamp_mire', mapId: 'swamp', name: 'Spino Mudflats', desc: 'Primeval mangrove marsh where massive river reptiles rule', x: 45, z: -55, radius: 16, icon: '🌿', reward: 75 }
+];
+
 JDR.DEFAULT_SAVE = {
-  version: 2,
+  version: 3,
   coins: 250,
   ownedDinos: ['trex'],
   selectedDino: 'trex',
@@ -506,6 +616,13 @@ JDR.DEFAULT_SAVE = {
   unlockedMaps: ['jungle','volcano'],
   highScores: [],
   achievements: [],
+  missionsCompleted: [],
+  discoveredLandmarks: [],
+  tutorialCompleted: false,
+  fossilsCollected: 0,
+  eggsCollected: 0,
+  roarsPerformed: 0,
+  archwaysPassedTotal: 0,
   explorationStats: {
     amberCollected: 0,
     distanceRiddenKm: 0,
@@ -515,7 +632,10 @@ JDR.DEFAULT_SAVE = {
   settings: {
     musicVol: 70, sfxVol: 85, difficulty: 'normal',
     showFps: false, screenShake: true, particles: 'high',
-    cameraDistance: 7.5, mouseSensitivity: 1.0, graphicsQuality: 'high'
+    cameraDistance: 7.5, cameraSensitivity: 1.0, cameraInvertY: false,
+    graphicsQuality: 'high', shadowsEnabled: true,
+    joystickSize: 'standard', reducedMotion: false,
+    atmosphere: 'day'
   },
   totalGames: 0, totalCoins: 0
 };

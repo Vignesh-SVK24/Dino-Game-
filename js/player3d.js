@@ -253,11 +253,14 @@ JDR.Player3D = (function(){
     this.applyOnFootAnimation(delta);
   };
 
-  PlayerController.prototype.setRidingPose = function(){
+  PlayerController.prototype.setRidingPose = function(dinoLean, gallopBounce){
     var p = this.parts;
-    // Seated posture with knees bent outwards around saddle
-    p.torso.position.y = 0.65;
-    p.torso.rotation.x = 0.12;
+    var b = gallopBounce || 0;
+    // Seated posture with dynamic lean into turns and gallop shock absorption
+    p.torso.position.y = 0.65 + b * 0.5;
+    p.torso.rotation.x = 0.12 + Math.abs(b) * 0.35;
+    p.torso.rotation.z = -(dinoLean || 0) * 0.85; // Lean into corners
+    p.head.rotation.z = (dinoLean || 0) * 0.4;    // Head counter-levels gaze
 
     p.leftLeg.rotation.x = 1.35;
     p.leftLeg.rotation.z = -0.35;
@@ -268,9 +271,9 @@ JDR.Player3D = (function(){
     p.rightKnee.rotation.x = -1.4;
 
     // Hands forward holding the dinosaur reins
-    p.leftArm.rotation.x = 1.1;
+    p.leftArm.rotation.x = 1.1 + b * 0.4;
     p.leftArm.rotation.y = -0.2;
-    p.rightArm.rotation.x = 1.1;
+    p.rightArm.rotation.x = 1.1 + b * 0.4;
     p.rightArm.rotation.y = 0.2;
   };
 

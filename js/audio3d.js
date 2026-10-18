@@ -270,6 +270,127 @@ JDR.Audio3D = (function(){
     });
   }
 
+  // Golden Dinosaur Egg pickup fanfare
+  function playEggCollect(){
+    if (!initialized) init();
+    resume();
+    var t = ctx.currentTime;
+    [523.25, 659.25, 783.99, 1046.50, 1318.51].forEach(function(freq, index){
+      var osc = ctx.createOscillator();
+      var g = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      g.gain.setValueAtTime(0.16, t + index * 0.05);
+      g.gain.exponentialRampToValueAtTime(0.001, t + index * 0.05 + 0.38);
+      osc.connect(g);
+      g.connect(sfxGain);
+      osc.start(t + index * 0.05);
+      osc.stop(t + index * 0.05 + 0.4);
+    });
+  }
+
+  // Ancient Fossil Relic discovery sound
+  function playFossilCollect(){
+    if (!initialized) init();
+    resume();
+    var t = ctx.currentTime;
+    [440, 554.37, 659.25, 880].forEach(function(freq, index){
+      var osc = ctx.createOscillator();
+      var g = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      g.gain.setValueAtTime(0.14, t + index * 0.06);
+      g.gain.exponentialRampToValueAtTime(0.001, t + index * 0.06 + 0.3);
+      osc.connect(g);
+      g.connect(sfxGain);
+      osc.start(t + index * 0.06);
+      osc.stop(t + index * 0.06 + 0.32);
+    });
+  }
+
+  // Grand Landmark Discovery Orchestral Fanfare
+  function playLandmarkDiscovery(){
+    if (!initialized) init();
+    resume();
+    var t = ctx.currentTime;
+    // Heroic brass chords
+    var notes = [
+      { f: 392.00, time: 0.00, dur: 0.25 },
+      { f: 523.25, time: 0.25, dur: 0.25 },
+      { f: 659.25, time: 0.50, dur: 0.35 },
+      { f: 783.99, time: 0.85, dur: 0.75 }
+    ];
+    notes.forEach(function(n){
+      var osc = ctx.createOscillator();
+      var g = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(n.f, t + n.time);
+      var filt = ctx.createBiquadFilter();
+      filt.type = 'lowpass';
+      filt.frequency.setValueAtTime(1400, t + n.time);
+      g.gain.setValueAtTime(0.18, t + n.time);
+      g.gain.exponentialRampToValueAtTime(0.001, t + n.time + n.dur);
+      osc.connect(filt);
+      filt.connect(g);
+      g.connect(sfxGain);
+      osc.start(t + n.time);
+      osc.stop(t + n.time + n.dur + 0.05);
+    });
+  }
+
+  // Quest / Mission completion sound
+  function playQuestComplete(){
+    if (!initialized) init();
+    resume();
+    var t = ctx.currentTime;
+    [587.33, 739.99, 880.00, 1174.66].forEach(function(freq, index){
+      var osc = ctx.createOscillator();
+      var g = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      g.gain.setValueAtTime(0.15, t + index * 0.07);
+      g.gain.exponentialRampToValueAtTime(0.001, t + index * 0.07 + 0.35);
+      osc.connect(g);
+      g.connect(sfxGain);
+      osc.start(t + index * 0.07);
+      osc.stop(t + index * 0.07 + 0.36);
+    });
+  }
+
+  // Periodic distant ambient dinosaur calls/bellows
+  var lastDistantCall = 0;
+  function triggerDistantAmbience(now){
+    if (!initialized || !ctx) return;
+    if (now - lastDistantCall < 18000) return;
+    lastDistantCall = now;
+
+    var t = ctx.currentTime;
+    var osc = ctx.createOscillator();
+    var g = ctx.createGain();
+    var filt = ctx.createBiquadFilter();
+
+    osc.type = Math.random() < 0.5 ? 'sawtooth' : 'sine';
+    var startF = 180 + Math.random() * 200;
+    osc.frequency.setValueAtTime(startF, t);
+    osc.frequency.exponentialRampToValueAtTime(startF * 0.6, t + 2.2);
+
+    filt.type = 'bandpass';
+    filt.frequency.setValueAtTime(450, t);
+    filt.Q.value = 3.0;
+
+    // Distant, echoing gain
+    g.gain.setValueAtTime(0.001, t);
+    g.gain.linearRampToValueAtTime(0.08, t + 0.6);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 2.4);
+
+    osc.connect(filt);
+    filt.connect(g);
+    g.connect(ambientGain);
+
+    osc.start(t);
+    osc.stop(t + 2.5);
+  }
+
   // Crisp Anime Adventure UI crystal chime
   function playClayClick(){
     if (!initialized) init();
@@ -353,6 +474,11 @@ JDR.Audio3D = (function(){
     playMount: playMount,
     playDismount: playDismount,
     playAmberCollect: playAmberCollect,
+    playEggCollect: playEggCollect,
+    playFossilCollect: playFossilCollect,
+    playLandmarkDiscovery: playLandmarkDiscovery,
+    playQuestComplete: playQuestComplete,
+    triggerDistantAmbience: triggerDistantAmbience,
     playClayClick: playClayClick,
     setBiomeAmbience: setBiomeAmbience
   };

@@ -11,7 +11,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Rajdhani:wght@500;600;700;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=4.4">
+  <link rel="stylesheet" href="style.css?v=4.5">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦖</text></svg>">
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
@@ -62,6 +63,9 @@
         </button>
         <button class="btn btn-secondary" id="btn-scores" onclick="JDR.app.showScreen('scores-screen')">
           <span class="btn-icon">🏆</span> ACHIEVEMENTS
+        </button>
+        <button class="btn btn-secondary" id="btn-missions" onclick="JDR.app.showScreen('missions-screen')">
+          <span class="btn-icon">📜</span> EXPEDITIONS & QUESTS
         </button>
         <button class="btn btn-secondary" id="btn-settings" onclick="JDR.app.showScreen('settings-screen')">
           <span class="btn-icon">⚙️</span> SETTINGS
@@ -244,6 +248,37 @@
       </div>
     </div>
 
+    <!-- Exploration Expeditions & Quests Screen -->
+    <div id="missions-screen" class="screen">
+      <button class="btn-back" onclick="JDR.app.returnFromMissions()">← Back</button>
+      <div class="global-coins">
+        <span class="coin-icon">💎</span>
+        <span class="coin-amount">0</span>
+      </div>
+
+      <h2 class="screen-title">Expeditions & Quests</h2>
+      <div class="clay-card missions-panel" style="width: min(780px, 94vw); max-height: 72vh; overflow-y: auto; padding: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; background: rgba(0,0,0,0.18); padding: 12px 18px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.08);">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 2rem;">🧭</span>
+            <div>
+              <div style="font-size: 0.85rem; color: #b8d2ea; font-weight: 600;">COMPLETED EXPEDITIONS</div>
+              <div style="font-size: 1.35rem; font-weight: 800; color: var(--sunlit-gold);" id="missions-count">0 / 7 Completed</div>
+            </div>
+          </div>
+          <div style="font-size: 1.1rem; font-weight: 700; color: #88c5ef;">
+            Amber Rewards Active
+          </div>
+        </div>
+
+        <h3 style="font-size: 1.25rem; color: var(--sunlit-gold); margin: 12px 0 10px 0;">Active Objectives:</h3>
+        <div id="missions-list" class="missions-grid"></div>
+
+        <h3 style="font-size: 1.25rem; color: var(--sunlit-gold); margin: 22px 0 10px 0;">Biome Discovery Landmarks:</h3>
+        <div id="landmarks-list" class="landmarks-grid"></div>
+      </div>
+    </div>
+
     <!-- Settings Screen -->
     <div id="settings-screen" class="screen">
       <button class="btn-back" onclick="JDR.app.showScreen('main-menu')">← Back</button>
@@ -253,35 +288,66 @@
       </div>
 
       <h2 class="screen-title">Simulation Settings</h2>
-      <div class="clay-card" style="width: min(520px, 92vw); padding: 32px;">
-        <div style="margin-bottom: 18px;">
-          <label style="font-size: 1.1rem; font-weight: 700; display: block; margin-bottom: 6px;">Music & Ambience Volume</label>
+      <div class="clay-card" style="width: min(560px, 94vw); padding: 28px; max-height: 75vh; overflow-y: auto;">
+        <!-- Audio -->
+        <div style="margin-bottom: 16px;">
+          <label style="font-size: 1.05rem; font-weight: 700; display: block; margin-bottom: 6px;">Music & Ambience Volume</label>
           <div style="display: flex; align-items: center; gap: 14px;">
             <input type="range" id="set-music" min="0" max="100" value="70" style="flex: 1;" oninput="JDR.app.updateSetting('musicVol', this.value)">
-            <span id="set-music-val" style="font-family: var(--font-score); font-weight: 700;">70%</span>
+            <span id="set-music-val" style="font-family: var(--font-score); font-weight: 700; width: 45px;">70%</span>
           </div>
         </div>
 
-        <div style="margin-bottom: 18px;">
-          <label style="font-size: 1.1rem; font-weight: 700; display: block; margin-bottom: 6px;">Dinosaur Roar & SFX Volume</label>
+        <div style="margin-bottom: 16px;">
+          <label style="font-size: 1.05rem; font-weight: 700; display: block; margin-bottom: 6px;">Dinosaur Roar & SFX Volume</label>
           <div style="display: flex; align-items: center; gap: 14px;">
             <input type="range" id="set-sfx" min="0" max="100" value="85" style="flex: 1;" oninput="JDR.app.updateSetting('sfxVol', this.value)">
-            <span id="set-sfx-val" style="font-family: var(--font-score); font-weight: 700;">85%</span>
+            <span id="set-sfx-val" style="font-family: var(--font-score); font-weight: 700; width: 45px;">85%</span>
           </div>
         </div>
 
-        <div style="margin-bottom: 18px;">
-          <label style="font-size: 1.1rem; font-weight: 700; display: block; margin-bottom: 6px;">3D Graphics Quality</label>
-          <select id="set-graphics" style="width: 100%; padding: 10px; border-radius: 14px; font-family: var(--font-ui); font-size: 1.1rem; font-weight: 700; background: var(--clay-card-inner);" onchange="JDR.app.updateSetting('graphicsQuality', this.value)">
-            <option value="high" selected>Ultra / High (PBR Shadows & Particles)</option>
-            <option value="medium">Medium (Standard Shadows)</option>
-            <option value="low">Performance (Mobile Optimized)</option>
+        <!-- Graphics -->
+        <div style="margin-bottom: 16px;">
+          <label style="font-size: 1.05rem; font-weight: 700; display: block; margin-bottom: 6px;">3D Graphics Quality</label>
+          <select id="set-graphics" style="width: 100%; padding: 10px; border-radius: 12px; font-family: var(--font-ui); font-size: 1.05rem; font-weight: 700; background: var(--clay-card-inner); color: white;" onchange="JDR.app.updateSetting('graphicsQuality', this.value)">
+            <option value="ultra">Ultra (PBR Soft Shadows, Max Resolution)</option>
+            <option value="high" selected>High (PCF Soft Shadows, High Res)</option>
+            <option value="medium">Medium (Standard Shadows, Balanced)</option>
+            <option value="low">Performance (Mobile Optimized, Fastest)</option>
           </select>
         </div>
 
-        <div style="margin-bottom: 24px;">
-          <label style="font-size: 1.1rem; font-weight: 700; display: block; margin-bottom: 6px;">Camera Riding Distance</label>
+        <div style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+          <label for="set-shadows" style="font-size: 1.05rem; font-weight: 700; cursor: pointer;">Dynamic Soft Shadows</label>
+          <input type="checkbox" id="set-shadows" checked style="width: 22px; height: 22px; cursor: pointer;" onchange="JDR.app.updateSetting('shadowsEnabled', this.checked)">
+        </div>
+
+        <!-- Camera -->
+        <div style="margin-bottom: 16px;">
+          <label style="font-size: 1.05rem; font-weight: 700; display: block; margin-bottom: 6px;">Camera Distance</label>
           <input type="range" id="set-cam-dist" min="4" max="14" value="7.5" step="0.5" style="width: 100%;" oninput="JDR.app.updateSetting('cameraDistance', this.value)">
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <label style="font-size: 1.05rem; font-weight: 700; display: block; margin-bottom: 6px;">Camera Sensitivity</label>
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <input type="range" id="set-cam-sens" min="0.5" max="2.5" step="0.1" value="1.0" style="flex: 1;" oninput="JDR.app.updateSetting('cameraSensitivity', this.value)">
+            <span id="set-cam-sens-val" style="font-family: var(--font-score); font-weight: 700; width: 45px;">1.0x</span>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+          <label for="set-invert-y" style="font-size: 1.05rem; font-weight: 700; cursor: pointer;">Invert Camera Pitch (Y-Axis)</label>
+          <input type="checkbox" id="set-invert-y" style="width: 22px; height: 22px; cursor: pointer;" onchange="JDR.app.updateSetting('cameraInvertY', this.checked)">
+        </div>
+
+        <div style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+          <label for="set-reduced-motion" style="font-size: 1.05rem; font-weight: 700; cursor: pointer;">Reduced Motion (Level Slopes)</label>
+          <input type="checkbox" id="set-reduced-motion" style="width: 22px; height: 22px; cursor: pointer;" onchange="JDR.app.updateSetting('reducedMotion', this.checked)">
+        </div>
+
+        <div style="margin-bottom: 22px;">
+          <button class="btn btn-secondary" onclick="JDR.app.showTutorial(true)" style="width: 100%;">📖 Review Exploration Guide</button>
         </div>
 
         <button class="btn btn-volcano" onclick="JDR.app.resetProgress()" style="width: 100%;">Reset Saved Progress</button>
@@ -291,6 +357,15 @@
     <!-- ==================== 3D GAME SCREEN ==================== -->
     <div id="game-3d-screen">
       <canvas id="canvas-3d"></canvas>
+
+      <!-- Discovery & Quest Adventure Banner -->
+      <div id="adventure-banner" class="adventure-banner">
+        <div class="banner-icon" id="adv-banner-icon">🏆</div>
+        <div class="banner-text">
+          <div class="banner-title" id="adv-banner-title">LANDMARK DISCOVERED</div>
+          <div class="banner-sub" id="adv-banner-sub">Emerald Falls (+75 Amber)</div>
+        </div>
+      </div>
 
       <!-- 3D Tactical In-Game HUD -->
       <div id="hud-3d">
@@ -321,12 +396,13 @@
             </div>
           </div>
 
-          <!-- Amber Coins, Fullscreen, On-Screen Controls & Pause Buttons -->
+          <!-- Amber Coins, Quests, Fullscreen, On-Screen Controls & Pause Buttons -->
           <div class="hud-stats-group">
             <div class="hud-amber-pill">
               <span>💎</span>
               <span id="hud-amber-count">0</span>
             </div>
+            <button class="hud-btn-pause" onclick="JDR.app.showScreen('missions-screen')" title="Expedition Quests" id="hud-btn-missions">📜</button>
             <button class="hud-btn-pause" onclick="JDR.simEngine.toggleOnScreenControls()" title="Toggle On-Screen Steering Buttons" id="hud-btn-controls">🎮</button>
             <button class="hud-btn-pause" onclick="JDR.app.toggleFullscreen()" title="Toggle Fullscreen" id="hud-btn-fullscreen">⛶</button>
             <button class="hud-btn-pause" onclick="JDR.simEngine.togglePause()" title="Pause">⏸</button>
@@ -402,9 +478,61 @@
           <h2 style="font-size: 2.2rem; color: var(--sunlit-gold); margin-bottom: 20px;">⏸ SIMULATION PAUSED</h2>
           <div style="display: flex; flex-direction: column; gap: 14px;">
             <button class="btn btn-primary btn-lg" onclick="JDR.simEngine.resume()">Resume Ride</button>
+            <button class="btn btn-secondary" onclick="JDR.app.showTutorial(false)">📖 Expedition Controls Guide</button>
             <button class="btn btn-secondary" onclick="JDR.app.toggleFullscreen()" id="pause-btn-fullscreen">⛶ Fullscreen</button>
             <button class="btn btn-volcano" onclick="JDR.simEngine.performRoar()">Fearsome Roar</button>
             <button class="btn btn-secondary" onclick="JDR.simEngine.quit()">Quit to Menu</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- First-Time Onboarding Tutorial Modal -->
+      <div id="tutorial-overlay" class="overlay" style="display: none;">
+        <div class="adventure-card overlay-content tutorial-content" style="max-width: 640px; padding: 28px; text-align: left; max-height: 85vh; overflow-y: auto;">
+          <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 16px;">
+            <span style="font-size: 2.8rem;">🦖</span>
+            <div>
+              <h2 style="font-size: 1.8rem; color: var(--sunlit-gold); margin: 0;">PREHISTORIC EXPEDITION GUIDE</h2>
+              <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">Master dinosaur riding, galloping, and world exploration</p>
+            </div>
+          </div>
+
+          <div class="tutorial-steps" style="display: flex; flex-direction: column; gap: 14px;">
+            <div class="tut-step">
+              <span class="tut-icon">🕹️</span>
+              <div>
+                <h4 style="font-size: 1.15rem; color: var(--sunlit-gold);">1. Responsive Steering</h4>
+                <p style="font-size: 0.95rem; color: #d0e4f7; line-height: 1.35;">Use <kbd>W/A/S/D</kbd>, Arrow Keys, or the On-Screen Virtual Joystick & Left/Right buttons. Dino immediately steers and banks smoothly in your intended direction.</p>
+              </div>
+            </div>
+
+            <div class="tut-step">
+              <span class="tut-icon">⚡</span>
+              <div>
+                <h4 style="font-size: 1.15rem; color: var(--sunlit-gold);">2. Gallop Sprint & Stamina</h4>
+                <p style="font-size: 0.95rem; color: #d0e4f7; line-height: 1.35;">Hold <kbd>SHIFT</kbd> or tap ⚡ SPRINT to gallop at peak speed. Watch your green stamina bar; slow down or walk to let your dinosaur recover breath.</p>
+              </div>
+            </div>
+
+            <div class="tut-step">
+              <span class="tut-icon">🏇</span>
+              <div>
+                <h4 style="font-size: 1.15rem; color: var(--sunlit-gold);">3. Mount & Dismount Exploration</h4>
+                <p style="font-size: 0.95rem; color: #d0e4f7; line-height: 1.35;">Press <kbd>E</kbd> or tap 🏇 MOUNT to dismount anytime and investigate ancient ruins on foot, or remount your companion.</p>
+              </div>
+            </div>
+
+            <div class="tut-step">
+              <span class="tut-icon">💎</span>
+              <div>
+                <h4 style="font-size: 1.15rem; color: var(--sunlit-gold);">4. Discoveries & Relics</h4>
+                <p style="font-size: 0.95rem; color: #d0e4f7; line-height: 1.35;">Search biomes for glowing Amber Crystals 💎, rare Golden Eggs 🪺, and Ancient Fossils 🦴. Discover scenic landmarks to earn massive rewards!</p>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 20px; display: flex; gap: 12px; justify-content: flex-end;">
+            <button class="btn btn-primary btn-lg" onclick="JDR.app.closeTutorial()">LET'S RIDE! 🦖</button>
           </div>
         </div>
       </div>
@@ -499,27 +627,27 @@
   </div>
 
   <!-- Three.js 3D Engine & Loaders -->
-  <script src="js/libs/three.min.js?v=4.4"></script>
-  <script src="js/libs/OrbitControls.js?v=4.4"></script>
-  <script src="js/libs/GLTFLoader.js?v=4.4"></script>
+  <script src="js/libs/three.min.js?v=4.5"></script>
+  <script src="js/libs/OrbitControls.js?v=4.5"></script>
+  <script src="js/libs/GLTFLoader.js?v=4.5"></script>
 
   <!-- Game Core & 3D Simulation Modules -->
-  <script src="js/config.js?v=4.4"></script>
-  <script src="js/audio.js?v=4.4"></script>
-  <script src="js/audio3d.js?v=4.4"></script>
-  <script src="js/dino3d.js?v=4.4"></script>
-  <script src="js/player3d.js?v=4.4"></script>
-  <script src="js/world3d.js?v=4.4"></script>
-  <script src="js/camera3d.js?v=4.4"></script>
-  <script src="js/multiplayer3d.js?v=4.4"></script>
-  <script src="js/homeCinematic3d.js?v=4.4"></script>
-  <script src="js/simEngine.js?v=4.4"></script>
+  <script src="js/config.js?v=4.5"></script>
+  <script src="js/audio.js?v=4.5"></script>
+  <script src="js/audio3d.js?v=4.5"></script>
+  <script src="js/dino3d.js?v=4.5"></script>
+  <script src="js/player3d.js?v=4.5"></script>
+  <script src="js/world3d.js?v=4.5"></script>
+  <script src="js/camera3d.js?v=4.5"></script>
+  <script src="js/multiplayer3d.js?v=4.5"></script>
+  <script src="js/homeCinematic3d.js?v=4.5"></script>
+  <script src="js/simEngine.js?v=4.5"></script>
 
   <!-- Classic 2D Engine (Preserved) -->
-  <script src="js/renderer.js?v=4.4"></script>
-  <script src="js/engine.js?v=4.4"></script>
+  <script src="js/renderer.js?v=4.5"></script>
+  <script src="js/engine.js?v=4.5"></script>
 
   <!-- Application Coordinator & UI Controller -->
-  <script src="js/app.js?v=4.4"></script>
+  <script src="js/app.js?v=4.5"></script>
 </body>
 </html>

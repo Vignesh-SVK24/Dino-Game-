@@ -524,6 +524,7 @@ JDR.Dino3D = (function(){
     this.config = dinoInstance.config;
     this.state = 'idle';
     this.speed = 0;
+    this.lean = 0; // Dynamic turn banking lean
     this.animTime = 0;
     this.roarTime = 0;
     this.stamina = this.config.staminaMax3D || 100;
@@ -533,22 +534,45 @@ JDR.Dino3D = (function(){
     this.heading = 0;
   }
 
-  DinosaurController.prototype.update = function(delta, inputSpeed, isSprinting, isJumping, doRoar, inWater){
+  DinosaurController.prototype.update = function(delta, inputSpeed, isSprinting, isJumping, doRoar, inWater, inMud, turnRate){
     this.animTime += delta;
 
     if (doRoar && this.roarTime <= 0) {
       this.roarTime = 1.3;
       JDR.Audio3D.playRoar(this.config.roarSound || 'trex');
+      if (JDR.SaveManager) {
+        JDR.SaveManager.data.roarsPerformed = (JDR.SaveManager.data.roarsPerformed || 0) + 1;
+      }
+      if (JDR.simEngine) JDR.simEngine.checkMissions();
     }
     if (this.roarTime > 0) {
       this.roarTime -= delta;
     }
 
+    // Mud slowing effect modulated by dinosaur mud resistance
+    var mudSlowFactor = 1.0;
+    if (inMud) {
+      mudSlowFactor = 0.55 + Math.min(0.4, (this.config.mudResistance || 1.0) * 0.25);
+    }
+
     var targetSpeed = inputSpeed > 0 ? (isSprinting && this.stamina > 5 ? this.config.sprintSpeed3D : this.config.walkSpeed3D) : 0;
-    this.speed += (targetSpeed - this.speed) * Math.min(1.0, delta * (this.config.acceleration3D || 15.0));
+    targetSpeed *= mudSlowFactor;
+
+    // Distinct acceleration vs deceleration based on mass and terrain grip
+    var accelRate = (this.config.acceleration3D || 16.0);
+    var decelRate = Math.max(10.0, (26.0 / Math.max(0.6, (this.config.mass3D || 2000) / 2500)) * (this.config.terrainGrip || 1.0));
+    var rate = targetSpeed > this.speed ? accelRate : decelRate;
+    this.speed += (targetSpeed - this.speed) * Math.min(1.0, delta * rate);
+
+    // Compute dynamic banking lean based on turn rate
+    var targetLean = (turnRate || 0) * 0.22;
+    targetLean = Math.max(-0.28, Math.min(0.28, targetLean));
+    this.lean += (targetLean - this.lean) * Math.min(1.0, delta * 7.0);
 
     if (isSprinting && this.speed > this.config.walkSpeed3D) {
-      this.stamina = Math.max(0, this.stamina - (JDR.CONFIG.SIM_3D.STAMINA_DRAIN_SPRINT * delta));
+      var drain = JDR.CONFIG.SIM_3D.STAMINA_DRAIN_SPRINT * delta;
+      if (inMud) drain *= 1.3;
+      this.stamina = Math.max(0, this.stamina - drain);
     } else {
       this.stamina = Math.min(this.config.staminaMax3D, this.stamina + (JDR.CONFIG.SIM_3D.STAMINA_RECOVERY * delta));
     }

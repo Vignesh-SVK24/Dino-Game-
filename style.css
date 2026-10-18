@@ -2018,3 +2018,114 @@ body.is-fullscreen .shop-coins {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(101, 188, 235, 0.5);
 }
+
+/* ==================== ADVENTURE DISCOVERY BANNER ==================== */
+.adventure-banner {
+  position: absolute;
+  top: calc(18px + var(--sai-top));
+  left: 50%;
+  transform: translateX(-50%) translateY(-130px);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, rgba(16, 34, 56, 0.94) 0%, rgba(8, 17, 28, 0.97) 100%);
+  border: 1.5px solid var(--border-gold);
+  border-radius: 40px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.8), 0 0 24px rgba(255, 200, 87, 0.35);
+  z-index: 120;
+  pointer-events: none;
+  opacity: 0;
+  transition: transform 0.45s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 0.35s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.adventure-banner.visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.banner-icon {
+  font-size: 2.2rem;
+  filter: drop-shadow(0 2px 8px rgba(255, 200, 87, 0.5));
+}
+
+.banner-title {
+  font-family: var(--font-title);
+  font-size: 0.95rem;
+  letter-spacing: 1.5px;
+  color: var(--sunlit-gold);
+  text-shadow: 0 0 10px rgba(255, 200, 87, 0.6);
+  font-weight: 700;
+}
+
+.banner-sub {
+  font-family: var(--font-ui);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+/* ==================== MISSIONS & LANDMARKS ==================== */
+.missions-panel {
+  background: var(--navy-panel) !important;
+  border: 1px solid var(--border-cyan) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  font-family: var(--font-score);
+}
+
+.badge-claimed {
+  background: #277A49;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(39, 122, 73, 0.5);
+}
+
+.badge-progress {
+  background: rgba(255, 200, 87, 0.15);
+  color: #FFC857;
+  border: 1px solid rgba(255, 200, 87, 0.45);
+}
+
+/* ==================== TUTORIAL MODAL ==================== */
+.tutorial-content {
+  background: linear-gradient(135deg, rgba(16, 34, 56, 0.96) 0%, rgba(8, 17, 28, 0.98) 100%) !important;
+  border: 1.5px solid var(--border-gold) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(255, 200, 87, 0.25) !important;
+  border-radius: 20px !important;
+}
+
+.tut-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+}
+
+.tut-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  font-family: var(--font-score);
+  font-size: 0.85em;
+  color: var(--sunlit-gold);
+}

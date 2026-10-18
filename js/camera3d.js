@@ -50,8 +50,13 @@ JDR.Camera3D = (function(){
       self.lastPointerX = e.clientX;
       self.lastPointerY = e.clientY;
 
-      self.yaw -= dx * self.sensitivity;
-      self.pitch += dy * self.sensitivity;
+      var settings = (JDR.SaveManager && JDR.SaveManager.data && JDR.SaveManager.data.settings) ? JDR.SaveManager.data.settings : {};
+      var sensMul = settings.cameraSensitivity !== undefined ? settings.cameraSensitivity : 1.0;
+      var invertY = settings.cameraInvertY ? -1 : 1;
+      var effSens = self.sensitivity * sensMul;
+
+      self.yaw -= dx * effSens;
+      self.pitch += dy * effSens * invertY;
       self.pitch = Math.max(self.minPitch, Math.min(self.maxPitch, self.pitch));
     });
 
@@ -88,6 +93,11 @@ JDR.Camera3D = (function(){
 
     window.addEventListener('touchmove', function(e){
       if (!self.isDragging || self.cameraTouchId === null) return;
+      var settings = (JDR.SaveManager && JDR.SaveManager.data && JDR.SaveManager.data.settings) ? JDR.SaveManager.data.settings : {};
+      var sensMul = settings.cameraSensitivity !== undefined ? settings.cameraSensitivity : 1.0;
+      var invertY = settings.cameraInvertY ? -1 : 1;
+      var effSens = (self.sensitivity * 1.5) * sensMul;
+
       for (var i = 0; i < e.touches.length; i++) {
         var t = e.touches[i];
         if (t.identifier === self.cameraTouchId) {
@@ -96,8 +106,8 @@ JDR.Camera3D = (function(){
           touchStartX = t.clientX;
           touchStartY = t.clientY;
 
-          self.yaw -= dx * (self.sensitivity * 1.5);
-          self.pitch += dy * (self.sensitivity * 1.5);
+          self.yaw -= dx * effSens;
+          self.pitch += dy * effSens * invertY;
           self.pitch = Math.max(self.minPitch, Math.min(self.maxPitch, self.pitch));
           break;
         }

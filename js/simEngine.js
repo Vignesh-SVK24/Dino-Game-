@@ -75,17 +75,25 @@ JDR.simEngine = (function(){
 
   function applyQualityPreset(){
     if (!renderer) return;
-    var q = JDR.SaveManager.data.settings.graphicsQuality || 'high';
+    var s = JDR.SaveManager.data && JDR.SaveManager.data.settings ? JDR.SaveManager.data.settings : {};
+    var q = s.graphicsQuality || 'high';
+    var shadows = s.shadowsEnabled !== false;
+
+    renderer.shadowMap.enabled = shadows;
     if (q === 'low') {
       renderer.setPixelRatio(1.0);
       renderer.shadowMap.type = THREE.BasicShadowMap;
     } else if (q === 'medium') {
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.35));
       renderer.shadowMap.type = THREE.PCFShadowMap;
-    } else {
+    } else if (q === 'ultra') {
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0));
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    } else {
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     }
+    if (sunLight) sunLight.castShadow = shadows;
   }
 
   // Dust puff particle system for sprinting and landing
@@ -320,44 +328,64 @@ JDR.simEngine = (function(){
       var dinoRoot = dinoInstance.root;
       var currentPos = dinoRoot.position;
 
-      // Turning / Steering
+      // Turning / Steering with angular difference
+      var turnDelta = 0;
       if (inputMagnitude > 0.05) {
         var targetAngle = Math.atan2(worldMoveVec.x, worldMoveVec.z);
         var currentAngle = dinoRoot.rotation.y;
         var diff = targetAngle - currentAngle;
         while (diff < -Math.PI) diff += Math.PI * 2;
         while (diff > Math.PI) diff -= Math.PI * 2;
-        // Fast, snappy, responsive turn rate so dinosaur steers toward target immediately
         var baseTurnRate = dinoCtrl.config.turnRate3D || 2.8;
         var effectiveTurnRate = Math.max(7.5, baseTurnRate * 2.5);
-        dinoRoot.rotation.y += diff * Math.min(1.0, delta * effectiveTurnRate);
+        turnDelta = diff * Math.min(1.0, delta * effectiveTurnRate);
+        dinoRoot.rotation.y += turnDelta;
       }
 
-      // Dinosaur jump or flight
+      // Environmental conditions
       var inWater = world3D && currentPos.y <= (world3D.map.waterLevel || -1.2) + 0.3;
+      var inMud = world3D ? world3D.isPlayerInMud(currentPos.x, currentPos.z) : false;
 
+      // Dinosaur jump or flight
       if (keys.jump && dinoCtrl.isGrounded) {
         dinoCtrl.verticalVelocity = dinoCtrl.config.jumpImpulse3D || 10.0;
         dinoCtrl.isGrounded = false;
         JDR.Audio3D.playFootstep(dinoCtrl.config.mass3D, true, inWater);
       }
 
-      // Update Dinosaur speed and procedural limbs
-      dinoCtrl.update(delta, inputMagnitude, isSprinting, keys.jump, false, inWater);
+      // Update Dinosaur speed, procedural limbs, and dynamic banking lean
+      dinoCtrl.update(delta, inputMagnitude, isSprinting, keys.jump, false, inWater, inMud, turnDelta / Math.max(0.001, delta));
 
-      // Move in the intended direction (Right moves right, Left moves left, Forward moves forward)
+      // Move along the intended direction
       var speed = dinoCtrl.speed;
       if (speed > 0.01) {
         var moveStep;
         if (inputMagnitude > 0.05) {
-          // Direct movement along the camera-relative input vector
           var moveDir = worldMoveVec.clone().normalize();
           moveStep = moveDir.multiplyScalar(speed * delta);
         } else {
-          // Coasting glide along current facing direction upon releasing input
           moveStep = new THREE.Vector3(0, 0, speed * delta).applyAxisAngle(new THREE.Vector3(0, 1, 0), dinoRoot.rotation.y);
         }
         currentPos.add(moveStep);
+      }
+
+      // Solid Obstacle Sliding Collision Resolution (Anti-clipping)
+      if (world3D && world3D.obstacles && world3D.obstacles.length) {
+        var dinoRadius = (dinoCtrl.config.scale3D || 1.0) * 1.35;
+        for (var o = 0; o < world3D.obstacles.length; o++) {
+          var obs = world3D.obstacles[o];
+          var odx = currentPos.x - obs.x;
+          var odz = currentPos.z - obs.z;
+          var distSq = odx * odx + odz * odz;
+          var minD = dinoRadius + obs.radius;
+          if (distSq < minD * minD && distSq > 0.0001) {
+            var odist = Math.sqrt(distSq);
+            var overlap = minD - odist;
+            currentPos.x += (odx / odist) * overlap;
+            currentPos.z += (odz / odist) * overlap;
+            dinoCtrl.speed *= 0.95; // Smooth slide friction
+          }
+        }
       }
 
       // Gravity and terrain height
@@ -373,17 +401,48 @@ JDR.simEngine = (function(){
           currentPos.y = terrainY;
           dinoCtrl.verticalVelocity = 0;
           dinoCtrl.isGrounded = true;
-          spawnDustPuff(currentPos, 6, inWater, mapConfig && mapConfig.isLava); // Ground landing dust/splash burst!
+          spawnDustPuff(currentPos, 6, inWater, mapConfig && mapConfig.isLava);
           JDR.Audio3D.playFootstep(dinoCtrl.config.mass3D, false, inWater);
         }
       } else {
         currentPos.y = terrainY;
         if (isSprinting && speed > 12.0 && Math.random() < 0.35) {
-          spawnDustPuff(currentPos, 1, inWater, mapConfig && mapConfig.isLava); // Gallop dust/splash trail!
+          spawnDustPuff(currentPos, 1, inWater, mapConfig && mapConfig.isLava);
         }
       }
 
-      // Sun and rim fill light follow player for continuous high-contrast shadows
+      // Terrain Slope Following (Pitch & Roll Alignment)
+      if (world3D && dinoCtrl.isGrounded) {
+        var norm = world3D.getTerrainNormal(currentPos.x, currentPos.z);
+        var heading = dinoRoot.rotation.y;
+        var fwdX = Math.sin(heading), fwdZ = Math.cos(heading);
+        var rightX = Math.cos(heading), rightZ = -Math.sin(heading);
+        var slopePitch = -(norm.x * fwdX + norm.z * fwdZ);
+        var slopeRoll = (norm.x * rightX + norm.z * rightZ);
+        slopePitch = Math.max(-0.55, Math.min(0.55, slopePitch));
+        slopeRoll = Math.max(-0.35, Math.min(0.35, slopeRoll));
+
+        var redMot = JDR.SaveManager.data && JDR.SaveManager.data.settings && JDR.SaveManager.data.settings.reducedMotion;
+        if (!redMot) {
+          dinoRoot.rotation.x += (slopePitch - dinoRoot.rotation.x) * Math.min(1.0, delta * 8.0);
+          dinoRoot.rotation.z += (slopeRoll + (dinoCtrl.lean || 0) - dinoRoot.rotation.z) * Math.min(1.0, delta * 8.0);
+        } else {
+          dinoRoot.rotation.x = 0;
+          dinoRoot.rotation.z = 0;
+        }
+      }
+
+      // Rider Dynamic Posture Sync (Leaning into corners + gallop bounce)
+      var gallopBounce = dinoInstance.parts.hips ? dinoInstance.parts.hips.position.y - (1.7 * dinoInstance.scale) : 0;
+      playerCtrl.setRidingPose(dinoCtrl.lean, gallopBounce);
+
+      // Distance and Quest Tracking
+      if (speed > 1.0 && JDR.SaveManager && JDR.SaveManager.data && JDR.SaveManager.data.explorationStats) {
+        JDR.SaveManager.data.explorationStats.distanceRiddenKm += (speed * delta) / 1000;
+        checkMissions();
+      }
+
+      // Sun and rim fill light follow player
       sunLight.position.set(currentPos.x + 50, 85, currentPos.z + 55);
       sunLight.target.position.copy(currentPos);
       sunLight.target.updateMatrixWorld();
@@ -425,14 +484,39 @@ JDR.simEngine = (function(){
       }
 
       // Dinosaur grazes / breathes in companion idle
-      dinoCtrl.update(delta, 0, false, false, false, false);
+      dinoCtrl.update(delta, 0, false, false, false, false, false, 0);
       JDR.Multiplayer3D.syncLocal(playerInstance.root.position, playerInstance.root.rotation.y, playerCtrl.speed, false);
     }
+
+    // Time Trial check
+    if (isTimeTrial && world3D && world3D.checkpoints) {
+      timeTrialTimer += delta;
+      for (var a = 0; a < world3D.checkpoints.length; a++) {
+        var cp = world3D.checkpoints[a];
+        if (!cp.passed) {
+          var cdx = activeFocusPos.x - cp.position.x;
+          var cdz = activeFocusPos.z - cp.position.z;
+          if (cdx * cdx + cdz * cdz < 24) {
+            cp.passed = true;
+            checkpointsPassed++;
+            JDR.Audio3D.playAmberCollect();
+            showAdventureBanner('ARCHWAY CLEARED!', 'Checkpoint ' + checkpointsPassed + ' / ' + world3D.checkpoints.length, '⏱️');
+            if (JDR.SaveManager && JDR.SaveManager.data) {
+              JDR.SaveManager.data.archwaysPassedTotal = (JDR.SaveManager.data.archwaysPassedTotal || 0) + 1;
+            }
+            checkMissions();
+          }
+        }
+      }
+    }
+
+    // Periodic distant dinosaur ambient call
+    JDR.Audio3D.triggerDistantAmbience(Date.now());
 
     // Update Follow Camera
     cameraCtrl.update(delta, activeFocusPos, world3D);
 
-    // Update World (collectibles, animated particles)
+    // Update World (collectibles, animated particles, wildlife)
     if (world3D) {
       world3D.update(delta, activeFocusPos);
     }
@@ -517,16 +601,91 @@ JDR.simEngine = (function(){
 
   function performRoar(){
     if (dinoCtrl) {
-      dinoCtrl.update(0.01, 0, false, false, true, false);
+      dinoCtrl.update(0.01, 0, false, false, true, false, false, 0);
       JDR.Multiplayer3D.sendRoar(dinoCtrl.config.roarSound);
     }
   }
 
+  // Adventure Notification Banner
+  var bannerTimeout = null;
+  function showAdventureBanner(title, subtitle, icon){
+    var banner = document.getElementById('adventure-banner');
+    var bIcon = document.getElementById('adv-banner-icon');
+    var bTitle = document.getElementById('adv-banner-title');
+    var bSub = document.getElementById('adv-banner-sub');
+    if (!banner) return;
+
+    if (bIcon) bIcon.textContent = icon || '🏆';
+    if (bTitle) bTitle.textContent = title;
+    if (bSub) bSub.textContent = subtitle;
+
+    banner.classList.add('visible');
+    if (bannerTimeout) clearTimeout(bannerTimeout);
+    bannerTimeout = setTimeout(function(){
+      banner.classList.remove('visible');
+    }, 3400);
+  }
+
+  function checkMissions(){
+    if (!JDR.MISSIONS || !JDR.SaveManager || !JDR.SaveManager.data) return;
+    var s = JDR.SaveManager.data;
+    var completedList = s.missionsCompleted || [];
+
+    for (var i = 0; i < JDR.MISSIONS.length; i++) {
+      var m = JDR.MISSIONS[i];
+      if (completedList.indexOf(m.id) >= 0) continue;
+
+      var passed = false;
+      if (m.type === 'speed') {
+        var kmh = dinoCtrl ? dinoCtrl.speed * 3.6 : 0;
+        if (kmh >= m.target) passed = true;
+      } else if (m.type === 'roars') {
+        if ((s.roarsPerformed || 0) >= m.target) passed = true;
+      } else if (m.type === 'landmarks') {
+        if ((s.discoveredLandmarks ? s.discoveredLandmarks.length : 0) >= m.target) passed = true;
+      } else if (m.type === 'archways') {
+        if ((s.archwaysPassedTotal || 0) >= m.target) passed = true;
+      } else if (m.progressKey === 'distanceRiddenKm') {
+        var mRidden = (s.explorationStats && s.explorationStats.distanceRiddenKm ? s.explorationStats.distanceRiddenKm : 0) * 1000;
+        if (mRidden >= m.target) passed = true;
+      } else if (m.progressKey && s[m.progressKey] !== undefined) {
+        if (s[m.progressKey] >= m.target) passed = true;
+      }
+
+      if (passed) {
+        JDR.SaveManager.completeMission(m.id);
+        JDR.Audio3D.playQuestComplete();
+        showAdventureBanner('MISSION COMPLETE!', m.title + ' (+' + m.reward + ' Amber)', m.icon);
+        onAmberCollected();
+      }
+    }
+  }
+
+  function onEggCollected(){
+    onAmberCollected();
+    showAdventureBanner('GOLDEN DINOSAUR EGG!', '+50 Amber added to collection', '🪺');
+    checkMissions();
+  }
+
+  function onFossilCollected(){
+    onAmberCollected();
+    showAdventureBanner('ANCIENT FOSSIL RELIC!', '+25 Amber added to collection', '🦴');
+    checkMissions();
+  }
+
+  function onLandmarkDiscovered(lmData){
+    onAmberCollected();
+    JDR.Audio3D.playLandmarkDiscovery();
+    showAdventureBanner('LANDMARK DISCOVERED!', lmData.name + ' (+' + (lmData.reward || 75) + ' Amber)', lmData.icon || '🗺️');
+    checkMissions();
+  }
+
   function onAmberCollected(){
     var coinsEl = document.getElementById('hud-amber-count');
-    if (coinsEl && JDR.SaveManager) {
+    if (coinsEl && JDR.SaveManager && JDR.SaveManager.data) {
       coinsEl.textContent = JDR.SaveManager.data.coins;
     }
+    checkMissions();
   }
 
   function onLavaHazard(){
@@ -768,6 +927,12 @@ JDR.simEngine = (function(){
     performRoar: performRoar,
     toggleOnScreenControls: toggleOnScreenControls,
     onAmberCollected: onAmberCollected,
+    onEggCollected: onEggCollected,
+    onFossilCollected: onFossilCollected,
+    onLandmarkDiscovered: onLandmarkDiscovered,
+    checkMissions: checkMissions,
+    showAdventureBanner: showAdventureBanner,
+    applyQualityPreset: applyQualityPreset,
     onLavaHazard: onLavaHazard,
     get currentDinoPos(){ return dinoInstance ? dinoInstance.root.position : new THREE.Vector3(); },
     get currentDinoYaw(){ return dinoInstance ? dinoInstance.root.rotation.y : 0; },
