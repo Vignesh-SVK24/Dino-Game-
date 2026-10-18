@@ -15,6 +15,7 @@ JDR.app = {
     JDR.SaveManager.load();
     JDR.engine.init(); // 2D runner engine
     JDR.simEngine.init(); // 3D simulator master engine
+    if (JDR.HomeCinematic3D) JDR.HomeCinematic3D.init();
 
     this.setupControls();
     this.fakeLoad();
@@ -24,11 +25,11 @@ JDR.app = {
     var bar = document.getElementById('loading-bar');
     var txt = document.getElementById('loading-text');
     var msgs = [
-      'Initializing Three.js WebGL Engine...',
-      'Synthesizing prehistoric terrain & biomes...',
-      'Articulating 3D dinosaur skeletons & saddles...',
-      'Configuring rider mount anchors...',
-      'Ready to explore the Jurassic World!'
+      'Initializing Anime Cinematic 3D Engine...',
+      'Synthesizing prehistoric valleys, rivers & waterfalls...',
+      'Articulating 3D dinosaur skeletons & hero saddles...',
+      'Awakening soaring Pteranodons in sky...',
+      'Ready for Epic Dinosaur Adventure!'
     ];
     var p = 0;
     var self = this;
@@ -65,6 +66,13 @@ JDR.app = {
       }, 350);
     });
 
+    // Control background 3D cinematic home scene
+    if (id !== 'game-screen' && id !== 'game-3d-screen') {
+      if (JDR.HomeCinematic3D) JDR.HomeCinematic3D.start();
+    } else {
+      if (JDR.HomeCinematic3D) JDR.HomeCinematic3D.stop();
+    }
+
     // If leaving 3D preview, stop animation
     if (id !== 'shop-screen' && this.previewAnimId) {
       cancelAnimationFrame(this.previewAnimId);
@@ -93,10 +101,12 @@ JDR.app = {
 
   refreshMenu: function(){
     this.updateCoins();
+    if (JDR.HomeCinematic3D) JDR.HomeCinematic3D.start();
   },
 
   // Launch the Flagship 3D Dinosaur Riding Simulation
   start3DSimulation: function(options){
+    if (JDR.HomeCinematic3D) JDR.HomeCinematic3D.stop();
     document.querySelectorAll('.screen').forEach(function(s){
       s.classList.remove('active');
       s.style.display = 'none';
@@ -111,6 +121,7 @@ JDR.app = {
 
   // Launch the Classic 2D Arcade Runner (Preserved)
   startClassic2D: function(mode){
+    if (JDR.HomeCinematic3D) JDR.HomeCinematic3D.stop();
     this.showScreen('game-screen');
     setTimeout(function(){
       JDR.engine.start(mode);
@@ -260,6 +271,7 @@ JDR.app = {
           JDR.SaveManager.save();
           JDR.app.renderShop();
           JDR.Audio3D.playClayClick();
+          if (JDR.HomeCinematic3D) JDR.HomeCinematic3D.refreshHeroDino();
         };
       } else {
         btn.textContent = 'Tame & Unlock (💎 ' + d.price + ')';
@@ -273,6 +285,7 @@ JDR.app = {
             JDR.SaveManager.save();
             JDR.app.renderShop();
             JDR.Audio3D.playAmberCollect();
+            if (JDR.HomeCinematic3D) JDR.HomeCinematic3D.refreshHeroDino();
           } else {
             alert('Need ' + (d.price - s.coins) + ' more Amber Gems to tame this dinosaur!');
           }
@@ -293,17 +306,21 @@ JDR.app = {
       });
       this.previewRenderer.setSize(220, 180);
       this.previewRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0));
+      this.previewRenderer.outputEncoding = THREE.sRGBEncoding;
 
       this.previewScene = new THREE.Scene();
       this.previewCamera = new THREE.PerspectiveCamera(45, 220 / 180, 0.1, 50);
       this.previewCamera.position.set(0, 3.2, 7.5);
       this.previewCamera.lookAt(0, 1.2, 0);
 
-      var light = new THREE.DirectionalLight(0xfff5ea, 1.8);
+      var light = new THREE.DirectionalLight(0xffe0a0, 2.2);
       light.position.set(5, 8, 5);
       this.previewScene.add(light);
-      var amb = new THREE.AmbientLight(0xecdcc4, 0.9);
+      var amb = new THREE.AmbientLight(0x274a63, 0.9);
       this.previewScene.add(amb);
+      var rim = new THREE.DirectionalLight(0x65bceb, 1.4);
+      rim.position.set(-5, 4, -5);
+      this.previewScene.add(rim);
     }
 
     if (this.previewDinoMesh) {

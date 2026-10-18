@@ -270,22 +270,34 @@ JDR.Audio3D = (function(){
     });
   }
 
-  // Soft Claymorphism UI click
+  // Crisp Anime Adventure UI crystal chime
   function playClayClick(){
     if (!initialized) init();
     resume();
     var t = ctx.currentTime;
-    var osc = ctx.createOscillator();
+    var osc1 = ctx.createOscillator();
+    var osc2 = ctx.createOscillator();
     var g = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(480, t);
-    osc.frequency.exponentialRampToValueAtTime(240, t + 0.06);
-    g.gain.setValueAtTime(0.16, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
-    osc.connect(g);
+
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(880, t);
+    osc1.frequency.exponentialRampToValueAtTime(1760, t + 0.08);
+
+    osc2.type = 'triangle';
+    osc2.frequency.setValueAtTime(1320, t);
+    osc2.frequency.exponentialRampToValueAtTime(2640, t + 0.08);
+
+    g.gain.setValueAtTime(0.12, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+
+    osc1.connect(g);
+    osc2.connect(g);
     g.connect(sfxGain);
-    osc.start(t);
-    osc.stop(t + 0.07);
+
+    osc1.start(t);
+    osc2.start(t);
+    osc1.stop(t + 0.1);
+    osc2.stop(t + 0.1);
   }
 
   // Ambient soundscapes for 3D biomes

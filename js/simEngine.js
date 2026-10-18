@@ -115,7 +115,7 @@ JDR.simEngine = (function(){
     }
   }
 
-  function spawnDustPuff(pos, count){
+  function spawnDustPuff(pos, count, isWater, isLava){
     if (!dustGroup || JDR.SaveManager.data.settings.graphicsQuality === 'low') return;
     var spawned = 0;
     for (var i = 0; i < dustPuffs.length && spawned < (count || 3); i++) {
@@ -129,10 +129,18 @@ JDR.simEngine = (function(){
           pos.y + 0.1,
           pos.z + (Math.random() - 0.5) * 0.8
         );
-        p.mesh.scale.set(0.6, 0.6, 0.6);
+        if (isLava) {
+          p.mesh.material.color.setHex(0xff5511);
+        } else if (isWater) {
+          p.mesh.material.color.setHex(0x8ce8ff);
+        } else {
+          p.mesh.material.color.setHex(0xd9cbb2);
+        }
+        var sc = isWater ? 0.45 : 0.6;
+        p.mesh.scale.set(sc, sc, sc);
         p.velocity.set(
           (Math.random() - 0.5) * 2.5,
-          1.2 + Math.random() * 1.8,
+          isWater ? 2.5 + Math.random() * 2.0 : 1.2 + Math.random() * 1.8,
           (Math.random() - 0.5) * 2.5
         );
         spawned++;
@@ -196,7 +204,7 @@ JDR.simEngine = (function(){
 
     // Directional Sun Light casting crisp soft shadows
     var shadowRes = s.settings.graphicsQuality === 'low' ? 512 : (s.settings.graphicsQuality === 'medium' ? 1024 : 2048);
-    sunLight = new THREE.DirectionalLight(mapConfig.sunColor || 0xfff6d9, mapConfig.sunIntensity || 1.85);
+    sunLight = new THREE.DirectionalLight(mapConfig.sunColor || 0xffe0a0, (mapConfig.sunIntensity || 1.85) * 1.15);
     sunLight.position.set(50, 85, 55);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = shadowRes;
@@ -211,12 +219,12 @@ JDR.simEngine = (function(){
     sunLight.shadow.bias = -0.0004;
     scene.add(sunLight);
 
-    // Ambient Hemisphere Light
-    ambientLight = new THREE.HemisphereLight(mapConfig.sunColor || 0xfff6d9, mapConfig.ambientColor || 0x487a52, 0.75);
+    // Ambient Hemisphere Light (Golden Top, Atmospheric Deep Navy/Jungle Bottom)
+    ambientLight = new THREE.HemisphereLight(mapConfig.sunColor || 0xffe0a0, mapConfig.ambientColor || 0x1d4d31, 0.95);
     scene.add(ambientLight);
 
-    // Rim / Fill Light opposite sun to illuminate shadow contours
-    fillLight = new THREE.DirectionalLight(mapConfig.ambientColor || 0x487a52, 0.65);
+    // Rim / Fill Light (Cinematic Sky Blue Outline)
+    fillLight = new THREE.DirectionalLight(0x65bceb, 0.95);
     fillLight.position.set(-50, 40, -55);
     scene.add(fillLight);
 
@@ -346,13 +354,13 @@ JDR.simEngine = (function(){
           currentPos.y = terrainY;
           dinoCtrl.verticalVelocity = 0;
           dinoCtrl.isGrounded = true;
-          spawnDustPuff(currentPos, 6); // Ground landing dust burst!
+          spawnDustPuff(currentPos, 6, inWater, mapConfig && mapConfig.isLava); // Ground landing dust/splash burst!
           JDR.Audio3D.playFootstep(dinoCtrl.config.mass3D, false, inWater);
         }
       } else {
         currentPos.y = terrainY;
         if (isSprinting && speed > 12.0 && Math.random() < 0.35) {
-          spawnDustPuff(currentPos, 1); // Gallop dust trail!
+          spawnDustPuff(currentPos, 1, inWater, mapConfig && mapConfig.isLava); // Gallop dust/splash trail!
         }
       }
 
