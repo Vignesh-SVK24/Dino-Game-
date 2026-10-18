@@ -3,62 +3,59 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Jurassic Dino Run | Epic Dinosaur Runner Game</title>
-  <meta name="description" content="Race through prehistoric worlds in this epic dinosaur runner game with 5 Jurassic maps, 8 collectible dinosaurs, and multiplayer mode.">
+  <title>Jurassic Dino Run | 3D Dinosaur Riding Simulator</title>
+  <meta name="description" content="Explore a realistic 3D prehistoric world, mount and ride dinosaurs, discover ancient biomes, and play multiplayer with friends in Jurassic Dino Run.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Rajdhani:wght@500;600;700;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
   <div id="app">
     <!-- Ambient Particles Background -->
-    <div id="ambient-bg">
-      <div class="ambient-particle"></div>
-      <div class="ambient-particle"></div>
-      <div class="ambient-particle"></div>
-      <div class="ambient-particle"></div>
-      <div class="ambient-particle"></div>
-      <div class="ambient-particle"></div>
-      <div class="ambient-particle"></div>
-      <div class="ambient-particle"></div>
-    </div>
+    <div id="ambient-bg"></div>
 
     <!-- Loading Screen -->
     <div id="loading-screen" class="screen active">
-      <div class="loading-content">
-        <div class="loading-dino"></div>
+      <div class="clay-card loading-content" style="padding: 40px; text-align: center; width: min(420px, 92vw);">
+        <div style="font-size: 4rem; margin-bottom: 15px;">🦖</div>
         <h1 class="game-title">Jurassic<br><span>Dino Run</span></h1>
-        <div class="loading-bar-container">
-          <div class="loading-bar" id="loading-bar"></div>
+        <p class="subtitle" style="color: #63503f; margin-bottom: 25px;">3D Dinosaur Riding Simulator</p>
+        <div style="width: 100%; height: 14px; background: rgba(0,0,0,0.12); border-radius: 8px; overflow: hidden; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.4);">
+          <div id="loading-bar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #527A46, #E98243); border-radius: 8px; transition: width 0.25s;"></div>
         </div>
-        <p class="loading-text" id="loading-text">Loading assets...</p>
+        <p class="loading-text" id="loading-text" style="font-weight: 700; color: #7a6652;">Loading prehistoric world & 3D dinos...</p>
       </div>
     </div>
 
     <!-- Main Menu -->
     <div id="main-menu" class="screen">
-      <div class="menu-header">
-        <h1 class="game-title glow">Jurassic<br><span>Dino Run</span></h1>
-        <p class="subtitle">The Ultimate Prehistoric Runner</p>
-      </div>
       <div class="menu-coins">
-        <span class="coin-icon">🪙</span>
+        <span class="coin-icon">💎</span>
         <span class="coin-amount" id="menu-coins">0</span>
       </div>
+
+      <div class="menu-header">
+        <h1 class="game-title">Jurassic<br><span>Dino Run</span></h1>
+        <p class="subtitle">3D Dinosaur Riding Simulator</p>
+      </div>
+
       <div class="menu-buttons">
         <button class="btn btn-primary btn-lg" id="btn-play" onclick="JDR.app.showScreen('mode-select')">
-          <span class="btn-icon">▶</span> Play Game
+          <span class="btn-icon">🏇</span> Play Simulator
         </button>
-        <button class="btn btn-secondary" id="btn-maps" onclick="JDR.app.showScreen('map-select')">
-          <span class="btn-icon">🗺️</span> Select Map
+        <button class="btn btn-jungle" id="btn-maps" onclick="JDR.app.showScreen('map-select')">
+          <span class="btn-icon">🗺️</span> Explore Maps
         </button>
-        <button class="btn btn-secondary" id="btn-shop" onclick="JDR.app.showScreen('shop-screen')">
-          <span class="btn-icon">🦕</span> Dino Shop
+        <button class="btn btn-volcano" id="btn-shop" onclick="JDR.app.showScreen('shop-screen')">
+          <span class="btn-icon">🦕</span> Dino Stables & Shop
+        </button>
+        <button class="btn btn-secondary" id="btn-multiplayer" onclick="JDR.app.showScreen('multiplayer-screen')">
+          <span class="btn-icon">🌐</span> Multiplayer Safari
         </button>
         <button class="btn btn-secondary" id="btn-scores" onclick="JDR.app.showScreen('scores-screen')">
-          <span class="btn-icon">🏆</span> High Scores
+          <span class="btn-icon">🏆</span> Achievements & Records
         </button>
         <button class="btn btn-secondary" id="btn-settings" onclick="JDR.app.showScreen('settings-screen')">
           <span class="btn-icon">⚙️</span> Settings
@@ -67,8 +64,9 @@
           <span class="btn-icon">📱</span> Go Fullscreen
         </button>
       </div>
+
       <div class="menu-footer">
-        <p>Press <kbd>SPACE</kbd> to Quick Start</p>
+        <p>Press <kbd>SPACE</kbd> or <kbd>ENTER</kbd> to Launch</p>
       </div>
     </div>
 
@@ -76,62 +74,167 @@
     <div id="mode-select" class="screen">
       <button class="btn-back" onclick="JDR.app.showScreen('main-menu')">← Back</button>
       <div class="global-coins">
-        <span class="coin-icon">🪙</span>
+        <span class="coin-icon">💎</span>
         <span class="coin-amount">0</span>
       </div>
-      <h2 class="screen-title">Select Mode</h2>
+
+      <h2 class="screen-title">Select Simulation Mode</h2>
       <div class="mode-cards">
-        <div class="mode-card" id="btn-single" onclick="JDR.app.startGame(1)">
-          <div class="mode-icon">🦖</div>
-          <h3>Single Player</h3>
-          <p>Endless survival run. Beat your high score!</p>
+        <!-- 3D Free Roam & Riding -->
+        <div class="clay-card mode-card" id="btn-sim-freeroam" onclick="JDR.app.start3DSimulation({ freeRoam: true })">
+          <div class="mode-icon">🏇</div>
+          <h3>3D Free Roam</h3>
+          <p>Mount your dinosaur, explore open prehistoric biomes, discover amber gems, and tame wild creatures!</p>
+          <div class="mode-controls">
+            <kbd>W/A/S/D</kbd> Ride &nbsp; <kbd>E</kbd> Mount/Dismount &nbsp; <kbd>R</kbd> Roar
+          </div>
+        </div>
+
+        <!-- 3D Time Trial Archways -->
+        <div class="clay-card mode-card" id="btn-sim-timetrial" onclick="JDR.app.start3DSimulation({ timeTrial: true })">
+          <div class="mode-icon">⏱️</div>
+          <h3>3D Time Trial</h3>
+          <p>Gallop at top sprint speed through ancient stone archways across the map before time expires!</p>
+          <div class="mode-controls">
+            <kbd>SHIFT</kbd> Sprint &nbsp; <kbd>SPACE</kbd> Leap Archways
+          </div>
+        </div>
+
+        <!-- Multiplayer Safari -->
+        <div class="clay-card mode-card" id="btn-sim-multi" onclick="JDR.app.showScreen('multiplayer-screen')">
+          <div class="mode-icon">🌐</div>
+          <h3>Multiplayer Safari</h3>
+          <p>Create or join private room codes and ride dinosaurs alongside friends in real-time!</p>
+          <div class="mode-controls">
+            <span>Room Codes & Synchronized Riding</span>
+          </div>
+        </div>
+
+        <!-- Classic 2D Arcade Runner (Preserved!) -->
+        <div class="clay-card mode-card" id="btn-arcade-runner" onclick="JDR.app.startClassic2D(1)">
+          <div class="mode-icon">🕹️</div>
+          <h3>Classic 2D Runner</h3>
+          <p>The nostalgic 2D arcade endless obstacle run mode. Jump and duck to beat high scores!</p>
           <div class="mode-controls">
             <kbd>SPACE</kbd> Jump &nbsp; <kbd>↓</kbd> Duck
           </div>
         </div>
-        <div class="mode-card" id="btn-multi" onclick="JDR.app.startGame(2)">
-          <div class="mode-icon">🦖🦕</div>
-          <h3>Two Players</h3>
-          <p>Race together on the same screen!</p>
-          <div class="mode-controls">
-            <span>P1: <kbd>W</kbd>/<kbd>S</kbd></span>
-            <span>P2: <kbd>↑</kbd>/<kbd>↓</kbd></span>
-          </div>
-        </div>
       </div>
     </div>
 
-    <!-- Map Select -->
+    <!-- Map Select (3D Worlds) -->
     <div id="map-select" class="screen">
       <button class="btn-back" onclick="JDR.app.showScreen('main-menu')">← Back</button>
       <div class="global-coins">
-        <span class="coin-icon">🪙</span>
+        <span class="coin-icon">💎</span>
         <span class="coin-amount">0</span>
       </div>
-      <h2 class="screen-title">Select Map</h2>
+
+      <h2 class="screen-title">Select Prehistoric Biome</h2>
       <div class="map-grid" id="map-grid">
-        <!-- Maps populated by JS -->
+        <!-- Populated by JS with 3D map metadata -->
       </div>
     </div>
 
-    <!-- Shop Screen -->
+    <!-- 3D Dino Stables & Shop -->
     <div id="shop-screen" class="screen">
       <button class="btn-back" onclick="JDR.app.showScreen('main-menu')">← Back</button>
-      <h2 class="screen-title">Dino Shop</h2>
       <div class="shop-coins">
-        <span class="coin-icon">🪙</span>
+        <span class="coin-icon">💎</span>
         <span class="coin-amount" id="shop-coins">0</span>
       </div>
-      <div class="shop-grid" id="shop-grid">
-        <!-- Dinos populated by JS -->
-      </div>
-      <div class="shop-preview" id="shop-preview">
-        <canvas id="preview-canvas" width="200" height="200"></canvas>
-        <div id="preview-info">
-          <h3 id="preview-name">Select a Dinosaur</h3>
-          <div id="preview-stats"></div>
-          <button class="btn btn-primary" id="preview-btn" style="display:none">Select</button>
+
+      <h2 class="screen-title">3D Dinosaur Stables & Shop</h2>
+      <div class="shop-container">
+        <!-- Left Grid: 9 Dinosaur species -->
+        <div class="shop-grid" id="shop-grid"></div>
+
+        <!-- Right Preview: Interactive details & stats -->
+        <div class="clay-card shop-preview" id="shop-preview">
+          <canvas id="preview-canvas" width="220" height="180"></canvas>
+          <h3 id="preview-name" style="font-size: 1.4rem; color: var(--clay-forest); margin-bottom: 4px;">Select a Dinosaur</h3>
+          <p id="preview-desc" style="font-size: 0.95rem; color: #695644; margin-bottom: 12px; line-height: 1.3;"></p>
+          
+          <div id="preview-stats" style="width: 100%; margin-bottom: 14px;"></div>
+          <button class="btn btn-primary" id="preview-btn" style="width: 100%; display: none;">Equip Mount</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Multiplayer Lobby Screen -->
+    <div id="multiplayer-screen" class="screen">
+      <button class="btn-back" onclick="JDR.app.showScreen('main-menu')">← Back</button>
+      <h2 class="screen-title">Multiplayer Dino Safari</h2>
+
+      <div class="clay-card lobby-panel">
+        <h3 style="font-size: 1.4rem; color: var(--clay-forest); margin-bottom: 12px;">Create or Join Safari Room</h3>
+        <p style="color: #695644; font-size: 1.05rem; margin-bottom: 16px;">
+          Share a 4-letter room code with a friend on another device or browser tab to ride together!
+        </p>
+
+        <div class="lobby-row">
+          <input type="text" id="room-code-input" class="lobby-input" maxlength="6" placeholder="CODE (e.g. JUR88)">
+          <button class="btn btn-jungle" onclick="JDR.app.joinMultiplayerRoom()">Join Room</button>
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: center; margin-bottom: 18px;">
+          <button class="btn btn-volcano" onclick="JDR.app.createMultiplayerRoom()">+ Create New Room</button>
+        </div>
+
+        <h4 style="font-size: 1.15rem; color: var(--clay-forest); margin-bottom: 6px;">Connected Riders in Room:</h4>
+        <div class="player-list" id="multiplayer-player-list">
+          <div class="player-item">Waiting for players to connect...</div>
+        </div>
+
+        <button class="btn btn-primary btn-lg" id="btn-launch-multi" style="width: 100%; margin-top: 12px; display: none;" onclick="JDR.app.startMultiplayerGame()">
+          🚀 Launch Dinosaur Safari
+        </button>
+      </div>
+    </div>
+
+    <!-- High Scores & Achievements -->
+    <div id="scores-screen" class="screen">
+      <button class="btn-back" onclick="JDR.app.showScreen('main-menu')">← Back</button>
+      <div class="global-coins">
+        <span class="coin-icon">💎</span>
+        <span class="coin-amount">0</span>
+      </div>
+
+      <h2 class="screen-title">Prehistoric Achievements</h2>
+      <div class="clay-card" style="width: min(720px, 92vw); padding: 28px; max-height: 65vh; overflow-y: auto;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+          <div style="background: var(--clay-card-inner); padding: 16px; border-radius: 18px; text-align: center;">
+            <div style="font-size: 2rem;">💎</div>
+            <div style="font-size: 1.6rem; font-weight: 800; color: var(--clay-volcano);" id="stat-amber">0</div>
+            <div style="font-size: 0.9rem; color: #6b5541;">Amber Gemstones</div>
+          </div>
+          <div style="background: var(--clay-card-inner); padding: 16px; border-radius: 18px; text-align: center;">
+            <div style="font-size: 2rem;">🦖</div>
+            <div style="font-size: 1.6rem; font-weight: 800; color: var(--clay-jungle);" id="stat-dinos">1 / 9</div>
+            <div style="font-size: 0.9rem; color: #6b5541;">Species Tamed</div>
+          </div>
+          <div style="background: var(--clay-card-inner); padding: 16px; border-radius: 18px; text-align: center;">
+            <div style="font-size: 2rem;">🗺️</div>
+            <div style="font-size: 1.6rem; font-weight: 800; color: var(--clay-sky);" id="stat-maps">2 / 5</div>
+            <div style="font-size: 0.9rem; color: #6b5541;">Biomes Discovered</div>
+          </div>
+        </div>
+
+        <h3 style="font-size: 1.3rem; margin-bottom: 12px; color: var(--clay-forest);">Classic 2D High Scores:</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="border-bottom: 2px solid rgba(0,0,0,0.1); text-align: left; font-size: 1.05rem;">
+              <th style="padding: 8px;">#</th>
+              <th>Score</th>
+              <th>Biome</th>
+              <th>Dinosaur</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="scores-body">
+            <tr><td colspan="5" style="padding: 16px; text-align: center; color: #88725e;">No scores logged yet!</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -139,76 +242,153 @@
     <div id="settings-screen" class="screen">
       <button class="btn-back" onclick="JDR.app.showScreen('main-menu')">← Back</button>
       <div class="global-coins">
-        <span class="coin-icon">🪙</span>
+        <span class="coin-icon">💎</span>
         <span class="coin-amount">0</span>
       </div>
-      <h2 class="screen-title">Settings</h2>
-      <div class="settings-panel glass-panel">
-        <div class="setting-row">
-          <label>Music Volume</label>
-          <input type="range" id="set-music" min="0" max="100" value="70" oninput="JDR.app.updateSetting('musicVol',this.value)">
-          <span id="set-music-val">70%</span>
+
+      <h2 class="screen-title">Simulation Settings</h2>
+      <div class="clay-card" style="width: min(520px, 92vw); padding: 32px;">
+        <div style="margin-bottom: 18px;">
+          <label style="font-size: 1.1rem; font-weight: 700; display: block; margin-bottom: 6px;">Music & Ambience Volume</label>
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <input type="range" id="set-music" min="0" max="100" value="70" style="flex: 1;" oninput="JDR.app.updateSetting('musicVol', this.value)">
+            <span id="set-music-val" style="font-family: var(--font-score); font-weight: 700;">70%</span>
+          </div>
         </div>
-        <div class="setting-row">
-          <label>SFX Volume</label>
-          <input type="range" id="set-sfx" min="0" max="100" value="80" oninput="JDR.app.updateSetting('sfxVol',this.value)">
-          <span id="set-sfx-val">80%</span>
+
+        <div style="margin-bottom: 18px;">
+          <label style="font-size: 1.1rem; font-weight: 700; display: block; margin-bottom: 6px;">Dinosaur Roar & SFX Volume</label>
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <input type="range" id="set-sfx" min="0" max="100" value="85" style="flex: 1;" oninput="JDR.app.updateSetting('sfxVol', this.value)">
+            <span id="set-sfx-val" style="font-family: var(--font-score); font-weight: 700;">85%</span>
+          </div>
         </div>
-        <div class="setting-row">
-          <label>Difficulty</label>
-          <select id="set-difficulty" onchange="JDR.app.updateSetting('difficulty',this.value)">
-            <option value="easy">Easy</option>
-            <option value="normal" selected>Normal</option>
-            <option value="hard">Hard</option>
-            <option value="insane">Insane</option>
+
+        <div style="margin-bottom: 18px;">
+          <label style="font-size: 1.1rem; font-weight: 700; display: block; margin-bottom: 6px;">3D Graphics Quality</label>
+          <select id="set-graphics" style="width: 100%; padding: 10px; border-radius: 14px; font-family: var(--font-ui); font-size: 1.1rem; font-weight: 700; background: var(--clay-card-inner);" onchange="JDR.app.updateSetting('graphicsQuality', this.value)">
+            <option value="high" selected>Ultra / High (PBR Shadows & Particles)</option>
+            <option value="medium">Medium (Standard Shadows)</option>
+            <option value="low">Performance (Mobile Optimized)</option>
           </select>
         </div>
-        <div class="setting-row">
-          <label>Show FPS</label>
-          <label class="toggle"><input type="checkbox" id="set-fps" onchange="JDR.app.updateSetting('showFps',this.checked)"><span class="toggle-slider"></span></label>
+
+        <div style="margin-bottom: 24px;">
+          <label style="font-size: 1.1rem; font-weight: 700; display: block; margin-bottom: 6px;">Camera Riding Distance</label>
+          <input type="range" id="set-cam-dist" min="4" max="14" value="7.5" step="0.5" style="width: 100%;" oninput="JDR.app.updateSetting('cameraDistance', this.value)">
         </div>
-        <div class="setting-row">
-          <label>Screen Shake</label>
-          <label class="toggle"><input type="checkbox" id="set-shake" checked onchange="JDR.app.updateSetting('screenShake',this.checked)"><span class="toggle-slider"></span></label>
-        </div>
-        <div class="setting-row">
-          <label>Particles</label>
-          <select id="set-particles" onchange="JDR.app.updateSetting('particles',this.value)">
-            <option value="high">High</option>
-            <option value="medium" selected>Medium</option>
-            <option value="low">Low</option>
-            <option value="off">Off</option>
-          </select>
-        </div>
-        <button class="btn btn-primary" onclick="JDR.app.resetProgress()" style="margin-top:20px;background:#ff4444;">Reset Progress</button>
+
+        <button class="btn btn-volcano" onclick="JDR.app.resetProgress()" style="width: 100%;">Reset Saved Progress</button>
       </div>
     </div>
 
-    <!-- High Scores -->
-    <div id="scores-screen" class="screen">
-      <button class="btn-back" onclick="JDR.app.showScreen('main-menu')">← Back</button>
-      <div class="global-coins">
-        <span class="coin-icon">🪙</span>
-        <span class="coin-amount">0</span>
+    <!-- ==================== 3D GAME SCREEN ==================== -->
+    <div id="game-3d-screen">
+      <canvas id="canvas-3d"></canvas>
+
+      <!-- 3D Tactical In-Game HUD -->
+      <div id="hud-3d">
+        <!-- Top Bar -->
+        <div class="hud-top-bar">
+          <!-- Active Dinosaur & Rider Status -->
+          <div class="hud-dino-card">
+            <div class="hud-dino-avatar" id="hud-dino-avatar">🦖</div>
+            <div class="hud-dino-info">
+              <h3 id="hud-dino-name">Tyrannosaurus Rex</h3>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="clay-badge" id="hud-mount-badge">MOUNTED 🏇</span>
+                <div class="hud-stamina-bar" title="Stamina">
+                  <div class="hud-stamina-fill" id="hud-stamina-fill"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Compass & Biome -->
+          <div class="hud-compass-card">
+            <div class="compass-dial">
+              <span id="hud-compass-needle">🧭</span>
+            </div>
+            <div>
+              <div style="font-size: 0.8rem; font-weight: 700; color: #7a6652;">BIOME</div>
+              <div style="font-size: 1.15rem; font-weight: 800; color: var(--clay-forest);" id="hud-map-name">Jurassic Jungle</div>
+            </div>
+          </div>
+
+          <!-- Amber Coins & Pause Button -->
+          <div class="hud-stats-group">
+            <div class="hud-amber-pill">
+              <span>💎</span>
+              <span id="hud-amber-count">0</span>
+            </div>
+            <button class="hud-btn-pause" onclick="JDR.simEngine.togglePause()" title="Pause">⏸</button>
+          </div>
+        </div>
+
+        <!-- Center Proximity Interaction Prompt -->
+        <div class="hud-prompt-container">
+          <div class="hud-prompt-card" id="hud-prompt">
+            <span class="clay-badge">E</span> Press E to Ride
+          </div>
+        </div>
+
+        <!-- Bottom Bar -->
+        <div class="hud-bottom-bar">
+          <!-- Desktop Controls Reminder -->
+          <div class="clay-card" style="padding: 8px 16px; border-radius: 18px; font-weight: 700; font-size: 0.95rem;" id="desktop-controls-hint">
+            <kbd>W/A/S/D</kbd> Move &nbsp; <kbd>SHIFT</kbd> Sprint &nbsp; <kbd>SPACE</kbd> Jump &nbsp; <kbd>E</kbd> Mount/Dismount &nbsp; <kbd>R</kbd> Roar
+          </div>
+
+          <!-- Gallop Speedometer -->
+          <div class="hud-speedometer">
+            <div id="hud-gallop-label">GALLOP</div>
+            <div class="speed-dial"><span id="hud-speed-val">0</span> <span class="speed-unit">KM/H</span></div>
+          </div>
+        </div>
       </div>
-      <h2 class="screen-title">High Scores</h2>
-      <div class="scores-panel glass-panel">
-        <table class="scores-table" id="scores-table">
-          <thead>
-            <tr><th>#</th><th>Score</th><th>Map</th><th>Dino</th><th>Date</th></tr>
-          </thead>
-          <tbody id="scores-body">
-            <tr><td colspan="5">No scores yet. Play to set records!</td></tr>
-          </tbody>
-        </table>
+
+      <!-- Mobile Touch On-Screen Controls -->
+      <div id="mobile-3d-controls">
+        <!-- Floating Virtual Joystick -->
+        <div id="joystick-zone">
+          <div id="joystick-knob"></div>
+        </div>
+
+        <!-- Clay Action Buttons -->
+        <div class="mobile-action-cluster">
+          <button class="mobile-action-btn mobile-btn-mount" id="m-btn-mount">
+            🏇 MOUNT / DISMOUNT
+          </button>
+          <button class="mobile-action-btn mobile-btn-jump" id="m-btn-jump">
+            ▲<span style="font-size: 0.65rem;">JUMP</span>
+          </button>
+          <button class="mobile-action-btn mobile-btn-sprint" id="m-btn-sprint">
+            ⚡<span style="font-size: 0.65rem;">SPRINT</span>
+          </button>
+          <button class="mobile-action-btn mobile-btn-roar" id="m-btn-roar">
+            🗣️<span style="font-size: 0.65rem;">ROAR</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 3D Simulator Pause Overlay -->
+      <div id="sim-pause-overlay" class="overlay">
+        <div class="clay-card overlay-content">
+          <h2 style="font-size: 2.2rem; color: var(--clay-forest); margin-bottom: 20px;">⏸ SIMULATION PAUSED</h2>
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            <button class="btn btn-primary btn-lg" onclick="JDR.simEngine.resume()">Resume Ride</button>
+            <button class="btn btn-volcano" onclick="JDR.simEngine.performRoar()">Fearsome Roar</button>
+            <button class="btn btn-secondary" onclick="JDR.simEngine.quit()">Quit to Menu</button>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Game Screen -->
+    <!-- ==================== CLASSIC 2D RUNNER SCREEN (PRESERVED) ==================== -->
     <div id="game-screen" class="screen">
       <canvas id="game-canvas"></canvas>
       
-      <!-- HUD -->
+      <!-- 2D HUD -->
       <div id="hud">
         <div class="hud-left">
           <div class="hud-score">
@@ -227,7 +407,7 @@
         </div>
         <div class="hud-right">
           <div class="hud-coins">
-            <span class="coin-icon">🪙</span>
+            <span class="coin-icon">💎</span>
             <span id="hud-coins">0</span>
           </div>
           <div class="hud-powerup" id="hud-powerup" style="display:none">
@@ -237,74 +417,75 @@
         </div>
       </div>
 
-      <!-- Mobile Controls -->
-    <div id="mobile-controls">
-      <div class="mobile-zone mobile-jump" id="mobile-jump">
-        <div class="zone-icon">↑</div>
-        <div class="zone-label">UP</div>
+      <!-- 2D Mobile Controls -->
+      <div id="mobile-controls">
+        <div class="mobile-zone mobile-jump" id="mobile-jump">
+          <div class="zone-icon">↑</div>
+          <div class="zone-label">JUMP</div>
+        </div>
+        <div class="mobile-zone mobile-duck" id="mobile-duck">
+          <div class="zone-icon">↓</div>
+          <div class="zone-label">DUCK</div>
+        </div>
       </div>
-      <div class="mobile-zone mobile-duck" id="mobile-duck">
-        <div class="zone-icon">↓</div>
-        <div class="zone-label">DOWN</div>
+
+      <!-- 2D Game Over Overlay -->
+      <div id="game-over-overlay" class="overlay" style="display:none">
+        <div class="clay-card overlay-content">
+          <h2 class="game-over-title" style="font-size: 2.5rem; color: var(--clay-volcano); margin-bottom: 15px;">MATCH FINISHED</h2>
+          <div class="go-stats" style="display: flex; justify-content: space-around; margin: 20px 0;">
+            <div class="go-stat">
+              <span class="go-label">Score</span>
+              <span class="go-value" id="go-score" style="font-size: 1.8rem; font-weight: 800; color: var(--clay-forest);">0</span>
+            </div>
+            <div class="go-stat">
+              <span class="go-label">Best</span>
+              <span class="go-value" id="go-best" style="font-size: 1.8rem; font-weight: 800; color: var(--clay-jungle);">0</span>
+            </div>
+            <div class="go-stat">
+              <span class="go-label">Amber</span>
+              <span class="go-value" id="go-coins" style="font-size: 1.8rem; font-weight: 800; color: var(--clay-amber);">+0</span>
+            </div>
+          </div>
+          <div style="display: flex; gap: 14px; justify-content: center;">
+            <button class="btn btn-primary" onclick="JDR.engine.restart()">↻ Play Again</button>
+            <button class="btn btn-secondary" onclick="JDR.engine.quit()">Menu</button>
+          </div>
+        </div>
       </div>
-    </div>
 
-      <!-- Player Labels (2P) -->
-      <div id="p1-label" class="player-label" style="display:none">P1</div>
-      <div id="p2-label" class="player-label" style="display:none">P2</div>
-
-      <!-- Pause Overlay -->
+      <!-- 2D Pause Overlay -->
       <div id="pause-overlay" class="overlay" style="display:none">
-        <div class="overlay-content glass-panel">
+        <div class="clay-card overlay-content">
           <h2>⏸ PAUSED</h2>
           <button class="btn btn-primary" onclick="JDR.engine.resume()">Resume</button>
           <button class="btn btn-secondary" onclick="JDR.engine.quit()">Quit to Menu</button>
         </div>
       </div>
-
-      <!-- Game Over Overlay -->
-      <div id="game-over-overlay" class="overlay" style="display:none">
-        <div class="overlay-content glass-panel game-over-panel">
-          <h2 class="game-over-title">GAME OVER</h2>
-          <div class="go-stats">
-            <div class="go-stat">
-              <span class="go-label">Score</span>
-              <span class="go-value" id="go-score">0</span>
-            </div>
-            <div class="go-stat">
-              <span class="go-label">Best</span>
-              <span class="go-value" id="go-best">0</span>
-            </div>
-            <div class="go-stat">
-              <span class="go-label">Coins</span>
-              <span class="go-value" id="go-coins">+0</span>
-            </div>
-            <div class="go-stat" id="go-new-best" style="display:none">
-              <span class="go-label go-newrecord">🏆 NEW RECORD!</span>
-            </div>
-          </div>
-          <div class="go-buttons">
-            <button class="btn btn-primary btn-lg" id="btn-retry" onclick="JDR.engine.restart()">
-              ↻ Play Again
-            </button>
-            <button class="btn btn-secondary" onclick="JDR.engine.quit()">
-              Menu
-            </button>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Countdown -->
-      <div id="countdown" style="display:none">
-        <span id="countdown-num">3</span>
-      </div>
     </div>
   </div>
 
+  <!-- Three.js 3D Engine & Loaders -->
+  <script src="js/libs/three.min.js"></script>
+  <script src="js/libs/OrbitControls.js"></script>
+  <script src="js/libs/GLTFLoader.js"></script>
+
+  <!-- Game Core & 3D Simulation Modules -->
   <script src="js/config.js"></script>
   <script src="js/audio.js"></script>
+  <script src="js/audio3d.js"></script>
+  <script src="js/dino3d.js"></script>
+  <script src="js/player3d.js"></script>
+  <script src="js/world3d.js"></script>
+  <script src="js/camera3d.js"></script>
+  <script src="js/multiplayer3d.js"></script>
+  <script src="js/simEngine.js"></script>
+
+  <!-- Classic 2D Engine (Preserved) -->
   <script src="js/renderer.js"></script>
   <script src="js/engine.js"></script>
+
+  <!-- Application Coordinator & UI Controller -->
   <script src="js/app.js"></script>
 </body>
 </html>

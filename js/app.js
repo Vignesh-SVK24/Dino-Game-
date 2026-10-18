@@ -1,233 +1,474 @@
-var JDR=window.JDR||{};
-JDR.app={
-  currentScreen:'loading-screen',
+/* ==================== APPLICATION COORDINATOR & UI CONTROLLER ==================== */
+var JDR = window.JDR || {};
 
-  init:function(){
-    JDR.Audio.init();JDR.SaveManager.load();JDR.engine.init();
-    this.setupControls();this.fakeLoad();
+JDR.app = {
+  currentScreen: 'loading-screen',
+  previewScene: null,
+  previewCamera: null,
+  previewRenderer: null,
+  previewDinoMesh: null,
+  previewAnimId: null,
+
+  init: function(){
+    JDR.Audio.init();
+    JDR.Audio3D.init();
+    JDR.SaveManager.load();
+    JDR.engine.init(); // 2D runner engine
+    JDR.simEngine.init(); // 3D simulator master engine
+
+    this.setupControls();
+    this.fakeLoad();
   },
 
-  fakeLoad:function(){
-    var bar=document.getElementById('loading-bar'),txt=document.getElementById('loading-text');
-    var msgs=['Loading maps...','Spawning dinosaurs...','Growing vegetation...','Ready!'];
-    var p=0,self=this;
-    var iv=setInterval(function(){
-      p+=Math.random()*15+5;if(p>100)p=100;
-      bar.style.width=p+'%';txt.textContent=msgs[Math.min(Math.floor(p/30),3)];
-      if(p>=100){clearInterval(iv);setTimeout(function(){self.showScreen('main-menu');},500);}
-    },200);
+  fakeLoad: function(){
+    var bar = document.getElementById('loading-bar');
+    var txt = document.getElementById('loading-text');
+    var msgs = [
+      'Initializing Three.js WebGL Engine...',
+      'Synthesizing prehistoric terrain & biomes...',
+      'Articulating 3D dinosaur skeletons & saddles...',
+      'Configuring rider mount anchors...',
+      'Ready to explore the Jurassic World!'
+    ];
+    var p = 0;
+    var self = this;
+    var iv = setInterval(function(){
+      p += Math.random() * 20 + 8;
+      if (p > 100) p = 100;
+      if (bar) bar.style.width = p + '%';
+      if (txt) txt.textContent = msgs[Math.min(Math.floor((p / 100) * msgs.length), msgs.length - 1)];
+      if (p >= 100) {
+        clearInterval(iv);
+        setTimeout(function(){
+          self.showScreen('main-menu');
+        }, 450);
+      }
+    }, 180);
   },
 
-  showScreen:function(id){
-    document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
-    var el=document.getElementById(id);if(el){el.classList.add('active');el.style.display='flex';
-      setTimeout(function(){el.style.opacity='1';},10);}
-    document.querySelectorAll('.screen:not(.active)').forEach(function(s){s.style.opacity='0';
-      setTimeout(function(){if(!s.classList.contains('active'))s.style.display='none';},400);});
-    this.currentScreen=id;JDR.Audio.play('click');
+  showScreen: function(id){
+    document.querySelectorAll('.screen').forEach(function(s){
+      s.classList.remove('active');
+    });
+
+    var el = document.getElementById(id);
+    if (el) {
+      el.classList.add('active');
+      el.style.display = 'flex';
+      setTimeout(function(){ el.style.opacity = '1'; }, 10);
+    }
+
+    document.querySelectorAll('.screen:not(.active)').forEach(function(s){
+      s.style.opacity = '0';
+      setTimeout(function(){
+        if (!s.classList.contains('active')) s.style.display = 'none';
+      }, 350);
+    });
+
+    // If leaving 3D preview, stop animation
+    if (id !== 'shop-screen' && this.previewAnimId) {
+      cancelAnimationFrame(this.previewAnimId);
+      this.previewAnimId = null;
+    }
+
+    this.currentScreen = id;
+    JDR.Audio3D.playClayClick();
     this.updateCoins();
-    if(id==='main-menu')this.refreshMenu();
-    if(id==='map-select')this.renderMaps();
-    if(id==='shop-screen')this.renderShop();
-    if(id==='scores-screen')this.renderScores();
-    if(id==='settings-screen')this.loadSettings();
+
+    if (id === 'main-menu') this.refreshMenu();
+    if (id === 'map-select') this.renderMaps();
+    if (id === 'shop-screen') this.renderShop();
+    if (id === 'scores-screen') this.renderScores();
+    if (id === 'settings-screen') this.loadSettings();
   },
 
-  updateCoins:function(){
+  updateCoins: function(){
     var coins = JDR.SaveManager.data.coins;
     document.querySelectorAll('.coin-amount').forEach(function(el){
       el.textContent = coins;
     });
+    var amberHud = document.getElementById('hud-amber-count');
+    if (amberHud) amberHud.textContent = coins;
   },
 
-  refreshMenu:function(){
+  refreshMenu: function(){
     this.updateCoins();
   },
 
-  startGame:function(mode){
-    this.showScreen('game-screen');
-    setTimeout(function(){JDR.engine.start(mode);},300);
+  // Launch the Flagship 3D Dinosaur Riding Simulation
+  start3DSimulation: function(options){
+    document.querySelectorAll('.screen').forEach(function(s){
+      s.classList.remove('active');
+      s.style.display = 'none';
+    });
+    var screen3D = document.getElementById('game-3d-screen');
+    if (screen3D) {
+      screen3D.style.display = 'block';
+      this.currentScreen = 'game-3d-screen';
+    }
+    JDR.simEngine.start(options);
   },
 
-  renderMaps:function(){
-    var grid=document.getElementById('map-grid');grid.innerHTML='';
-    var sel=JDR.SaveManager.data.selectedMap;
+  // Launch the Classic 2D Arcade Runner (Preserved)
+  startClassic2D: function(mode){
+    this.showScreen('game-screen');
+    setTimeout(function(){
+      JDR.engine.start(mode);
+    }, 250);
+  },
+
+  renderMaps: function(){
+    var grid = document.getElementById('map-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    var sel = JDR.SaveManager.data.selectedMap;
+    var self = this;
+
     JDR.MAPS.forEach(function(m){
-      var card=document.createElement('div');
-      card.className='map-card'+(m.id===sel?' selected':'')+(m.unlocked?'':' locked');
-      var cvs=document.createElement('canvas');cvs.width=320;cvs.height=200;
-      var c=cvs.getContext('2d');
-      // draw mini preview
+      var card = document.createElement('div');
+      card.className = 'clay-card map-card' + (m.id === sel ? ' selected' : '') + (m.unlocked ? '' : ' locked');
+
+      var cvs = document.createElement('canvas');
+      cvs.width = 320; cvs.height = 180;
+      var c = cvs.getContext('2d');
+
+      // Draw stylized biome preview
       JDR.Background.reset();
-      JDR.Background.draw(c,m,320,200,0);
-      if (m.bgImage) {
-        var img = new Image();
-        img.src = m.bgImage;
-        img.onload = function() { JDR.Background.draw(c,m,320,200,0); };
-      }
-      var info=document.createElement('div');info.className='map-card-info';
-      info.innerHTML='<h4>'+m.name+'</h4><p>'+m.description+'</p>';
-      card.appendChild(cvs);card.appendChild(info);
-      if(!m.unlocked){
-        var lock=document.createElement('div');lock.className='map-lock';
-        lock.textContent='🔒 '+m.price+' coins';card.appendChild(lock);
-        card.onclick=function(){
-          if(JDR.SaveManager.data.coins>=m.price){
-            JDR.SaveManager.data.coins-=m.price;
-            JDR.SaveManager.data.unlockedMaps.push(m.id);m.unlocked=true;
-            JDR.SaveManager.save();JDR.app.renderMaps();JDR.Audio.play('coin');
+      JDR.Background.draw(c, m, 320, 180, 0);
+
+      var info = document.createElement('div');
+      info.className = 'map-card-info';
+      info.innerHTML = '<h4>' + m.name + '</h4><p>' + m.description + '</p>';
+
+      card.appendChild(cvs);
+      card.appendChild(info);
+
+      if (!m.unlocked) {
+        var lock = document.createElement('div');
+        lock.className = 'map-lock';
+        lock.textContent = '🔒 Unlock: ' + m.price + ' Amber Gems';
+        card.appendChild(lock);
+
+        card.onclick = function(){
+          if (JDR.SaveManager.data.coins >= m.price) {
+            JDR.SaveManager.data.coins -= m.price;
+            JDR.SaveManager.data.unlockedMaps.push(m.id);
+            m.unlocked = true;
+            JDR.SaveManager.save();
+            self.renderMaps();
+            JDR.Audio3D.playAmberCollect();
+          } else {
+            alert('Need ' + m.price + ' Amber gems to unlock this biome!');
           }
         };
-      }else{
-        card.onclick=function(){
-          JDR.SaveManager.data.selectedMap=m.id;JDR.SaveManager.save();
-          JDR.app.renderMaps();JDR.Audio.play('click');
+      } else {
+        card.onclick = function(){
+          JDR.SaveManager.data.selectedMap = m.id;
+          JDR.SaveManager.save();
+          self.renderMaps();
+          JDR.Audio3D.playClayClick();
         };
       }
       grid.appendChild(card);
     });
   },
 
-  renderShop:function(){
-    var grid=document.getElementById('shop-grid');grid.innerHTML='';
-    var s=JDR.SaveManager.data;
-    document.getElementById('shop-coins').textContent=s.coins;
-    var self=this;
+  renderShop: function(){
+    var grid = document.getElementById('shop-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    var s = JDR.SaveManager.data;
+    var coinsEl = document.getElementById('shop-coins');
+    if (coinsEl) coinsEl.textContent = s.coins;
+
+    var self = this;
     JDR.DINOS.forEach(function(d){
-      var card=document.createElement('div');
-      card.className='dino-card'+(d.id===s.selectedDino?' selected':'')+(d.owned?'':' locked');
-      var cvs=document.createElement('canvas');cvs.width=80;cvs.height=80;
-      var c=cvs.getContext('2d');
-      JDR.DinoRenderer.draw(c,d,10,30,0,'run');
-      card.appendChild(cvs);
-      var h4=document.createElement('h4');h4.textContent=d.name;card.appendChild(h4);
-      var tag=document.createElement('div');
-      tag.className=d.owned?'owned':'price';
-      tag.textContent=d.owned?(d.id===s.selectedDino?'✓ Equipped':'Owned'):'🪙 '+d.price;
+      var card = document.createElement('div');
+      card.className = 'clay-card dino-card' + (d.id === s.selectedDino ? ' selected' : '');
+
+      var icon = document.createElement('div');
+      icon.style.fontSize = '2.4rem';
+      icon.style.margin = '4px 0';
+      icon.textContent = d.id === 'pteranodon' ? '🦅' : (d.id === 'spino' ? '🐊' : (d.id === 'diplo' ? '🦕' : '🦖'));
+      card.appendChild(icon);
+
+      var h4 = document.createElement('h4');
+      h4.textContent = d.name;
+      card.appendChild(h4);
+
+      var cat = document.createElement('div');
+      cat.style.fontSize = '0.78rem';
+      cat.style.color = '#7d6855';
+      cat.style.marginBottom = '6px';
+      cat.textContent = d.category || 'Dinosaur';
+      card.appendChild(cat);
+
+      var tag = document.createElement('div');
+      tag.className = d.owned ? 'owned' : 'price';
+      tag.textContent = d.owned ? (d.id === s.selectedDino ? '✓ Equipped' : 'Tamed') : '💎 ' + d.price;
       card.appendChild(tag);
-      card.onclick=function(){self.selectDino(d);};
+
+      card.onclick = function(){
+        self.selectDino(d);
+      };
+
       grid.appendChild(card);
     });
+
+    // Select currently equipped dino
+    var currentDino = JDR.DINOS.find(function(d){ return d.id === s.selectedDino; }) || JDR.DINOS[0];
+    this.selectDino(currentDino);
   },
 
-  selectDino:function(d){
-    var s=JDR.SaveManager.data;
-    var pvC=document.getElementById('preview-canvas').getContext('2d');
-    pvC.clearRect(0,0,200,200);
-    JDR.DinoRenderer.draw(pvC,d,50,80,0,'run');
-    document.getElementById('preview-name').textContent=d.name;
-    var stats='<div class="stat-bar"><label>Speed</label><div class="bar"><div class="bar-fill" style="width:'+
-      (d.speed*75)+'%;background:#4ecdc4"></div></div></div>'+
-      '<div class="stat-bar"><label>Jump</label><div class="bar"><div class="bar-fill" style="width:'+
-      (d.jump*75)+'%;background:#f5a623"></div></div></div>'+
-      '<div class="stat-bar"><label>Size</label><div class="bar"><div class="bar-fill" style="width:'+
-      (d.size*60)+'%;background:#ff6b6b"></div></div></div>';
-    document.getElementById('preview-stats').innerHTML=stats;
-    var btn=document.getElementById('preview-btn');btn.style.display='block';
-    if(d.owned){
-      btn.textContent=d.id===s.selectedDino?'Equipped ✓':'Equip';
-      btn.onclick=function(){s.selectedDino=d.id;JDR.SaveManager.save();JDR.app.renderShop();JDR.Audio.play('click');};
-    }else{
-      btn.textContent='Buy (🪙 '+d.price+')';
-      btn.onclick=function(){
-        if(s.coins>=d.price){s.coins-=d.price;s.ownedDinos.push(d.id);d.owned=true;
-          s.selectedDino=d.id;JDR.SaveManager.save();JDR.app.renderShop();JDR.Audio.play('powerup');
-        }
-      };
+  selectDino: function(d){
+    var s = JDR.SaveManager.data;
+    var nameEl = document.getElementById('preview-name');
+    var descEl = document.getElementById('preview-desc');
+    var statsEl = document.getElementById('preview-stats');
+    var btn = document.getElementById('preview-btn');
+
+    if (nameEl) nameEl.textContent = d.name;
+    if (descEl) descEl.textContent = d.desc;
+
+    // Rich 3D simulator stats
+    if (statsEl) {
+      var speedPct = Math.round((d.sprintSpeed3D / 28) * 100);
+      var stamPct = Math.round((d.staminaMax3D / 150) * 100);
+      var jumpPct = Math.round((d.jumpImpulse3D / 16) * 100);
+      var massLabel = d.mass3D > 1000 ? (d.mass3D / 1000).toFixed(1) + ' Tons' : d.mass3D + ' kg';
+
+      statsEl.innerHTML =
+        '<div class="stat-bar"><label>Sprint Speed (' + Math.round(d.sprintSpeed3D * 3.6) + ' km/h)</label><div class="bar"><div class="bar-fill" style="width:' + speedPct + '%; background:#E98243"></div></div></div>' +
+        '<div class="stat-bar"><label>Stamina Capacity</label><div class="bar"><div class="bar-fill" style="width:' + stamPct + '%; background:#527A46"></div></div></div>' +
+        '<div class="stat-bar"><label>Leap Impulse</label><div class="bar"><div class="bar-fill" style="width:' + jumpPct + '%; background:#9CCFE0"></div></div></div>' +
+        '<div style="display:flex; justify-content:space-between; margin-top:8px; font-weight:700; font-size:0.9rem; color:#63503f;">' +
+        '<span>Mass: ' + massLabel + '</span>' +
+        '<span>' + (d.canSwim ? '🏊 Swimmer' : (d.canFly ? '🪶 Flier' : 'Terrestrial')) + '</span>' +
+        '</div>';
+    }
+
+    // Initialize 3D Turntable Preview
+    this.setupShopPreview3D(d);
+
+    if (btn) {
+      btn.style.display = 'block';
+      if (d.owned) {
+        btn.textContent = d.id === s.selectedDino ? 'Equipped Mount ✓' : 'Equip for Safari';
+        btn.className = 'btn ' + (d.id === s.selectedDino ? 'btn-jungle' : 'btn-primary');
+        btn.onclick = function(){
+          s.selectedDino = d.id;
+          JDR.SaveManager.save();
+          JDR.app.renderShop();
+          JDR.Audio3D.playClayClick();
+        };
+      } else {
+        btn.textContent = 'Tame & Unlock (💎 ' + d.price + ')';
+        btn.className = 'btn btn-volcano';
+        btn.onclick = function(){
+          if (s.coins >= d.price) {
+            s.coins -= d.price;
+            s.ownedDinos.push(d.id);
+            d.owned = true;
+            s.selectedDino = d.id;
+            JDR.SaveManager.save();
+            JDR.app.renderShop();
+            JDR.Audio3D.playAmberCollect();
+          } else {
+            alert('Need ' + (d.price - s.coins) + ' more Amber Gems to tame this dinosaur!');
+          }
+        };
+      }
     }
   },
 
-  renderScores:function(){
-    var body=document.getElementById('scores-body');body.innerHTML='';
-    var hs=JDR.SaveManager.data.highScores;
-    if(!hs.length){body.innerHTML='<tr><td colspan="5" style="text-align:center;color:#8899aa">No scores yet!</td></tr>';return;}
-    hs.forEach(function(s,i){
-      var tr=document.createElement('tr');
-      tr.innerHTML='<td>'+(i+1)+'</td><td style="color:#ffd700;font-family:Orbitron">'+s.score+
-        '</td><td>'+s.map+'</td><td>'+s.dino+'</td><td style="color:#8899aa">'+s.date+'</td>';
+  setupShopPreview3D: function(dinoConfig){
+    var previewCanvas = document.getElementById('preview-canvas');
+    if (!previewCanvas) return;
+
+    if (!this.previewRenderer) {
+      this.previewRenderer = new THREE.WebGLRenderer({
+        canvas: previewCanvas,
+        antialias: true,
+        alpha: true
+      });
+      this.previewRenderer.setSize(220, 180);
+      this.previewRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0));
+
+      this.previewScene = new THREE.Scene();
+      this.previewCamera = new THREE.PerspectiveCamera(45, 220 / 180, 0.1, 50);
+      this.previewCamera.position.set(0, 3.2, 7.5);
+      this.previewCamera.lookAt(0, 1.2, 0);
+
+      var light = new THREE.DirectionalLight(0xfff5ea, 1.8);
+      light.position.set(5, 8, 5);
+      this.previewScene.add(light);
+      var amb = new THREE.AmbientLight(0xecdcc4, 0.9);
+      this.previewScene.add(amb);
+    }
+
+    if (this.previewDinoMesh) {
+      this.previewScene.remove(this.previewDinoMesh);
+    }
+
+    var dinoObj = JDR.Dino3D.createDinosaurMesh(dinoConfig);
+    this.previewDinoMesh = dinoObj.root;
+    this.previewScene.add(this.previewDinoMesh);
+
+    var self = this;
+    if (this.previewAnimId) cancelAnimationFrame(this.previewAnimId);
+
+    var animLoop = function(){
+      if (self.currentScreen !== 'shop-screen') return;
+      self.previewAnimId = requestAnimationFrame(animLoop);
+      if (self.previewDinoMesh) {
+        self.previewDinoMesh.rotation.y += 0.015;
+      }
+      self.previewRenderer.render(self.previewScene, self.previewCamera);
+    };
+    animLoop();
+  },
+
+  renderScores: function(){
+    var s = JDR.SaveManager.data;
+    var statAmber = document.getElementById('stat-amber');
+    var statDinos = document.getElementById('stat-dinos');
+    var statMaps = document.getElementById('stat-maps');
+
+    if (statAmber) statAmber.textContent = s.coins;
+    if (statDinos) statDinos.textContent = (s.ownedDinos ? s.ownedDinos.length : 1) + ' / 9';
+    if (statMaps) statMaps.textContent = (s.unlockedMaps ? s.unlockedMaps.length : 2) + ' / 5';
+
+    var body = document.getElementById('scores-body');
+    if (!body) return;
+    body.innerHTML = '';
+    var hs = s.highScores || [];
+    if (!hs.length) {
+      body.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:16px; color:#88725e;">No scores logged yet! Play a match to set records.</td></tr>';
+      return;
+    }
+    hs.forEach(function(score, i){
+      var tr = document.createElement('tr');
+      tr.style.borderBottom = '1px solid rgba(0,0,0,0.06)';
+      tr.innerHTML = '<td style="padding:10px 8px; font-weight:700;">' + (i + 1) + '</td>' +
+        '<td style="color:#d98822; font-family:Orbitron; font-weight:800;">' + score.score + '</td>' +
+        '<td style="font-weight:600;">' + score.map + '</td>' +
+        '<td>' + score.dino + '</td>' +
+        '<td style="color:#88725e; font-size:0.9rem;">' + score.date + '</td>';
       body.appendChild(tr);
     });
   },
 
-  loadSettings:function(){
-    var s=JDR.SaveManager.data.settings;
-    document.getElementById('set-music').value=s.musicVol;
-    document.getElementById('set-music-val').textContent=s.musicVol+'%';
-    document.getElementById('set-sfx').value=s.sfxVol;
-    document.getElementById('set-sfx-val').textContent=s.sfxVol+'%';
-    document.getElementById('set-difficulty').value=s.difficulty;
-    document.getElementById('set-fps').checked=s.showFps;
-    document.getElementById('set-shake').checked=s.screenShake;
-    document.getElementById('set-particles').value=s.particles;
+  loadSettings: function(){
+    var s = JDR.SaveManager.data.settings;
+    var setMusic = document.getElementById('set-music');
+    var setMusicVal = document.getElementById('set-music-val');
+    var setSfx = document.getElementById('set-sfx');
+    var setSfxVal = document.getElementById('set-sfx-val');
+    var setCamDist = document.getElementById('set-cam-dist');
+
+    if (setMusic) setMusic.value = s.musicVol;
+    if (setMusicVal) setMusicVal.textContent = s.musicVol + '%';
+    if (setSfx) setSfx.value = s.sfxVol;
+    if (setSfxVal) setSfxVal.textContent = s.sfxVol + '%';
+    if (setCamDist) setCamDist.value = s.cameraDistance || 7.5;
   },
 
-  updateSetting:function(key,val){
-    var s=JDR.SaveManager.data.settings;
-    if(key==='musicVol'){s.musicVol=parseInt(val);JDR.Audio.setMusicVol(val);document.getElementById('set-music-val').textContent=val+'%';}
-    if(key==='sfxVol'){s.sfxVol=parseInt(val);JDR.Audio.setSfxVol(val);document.getElementById('set-sfx-val').textContent=val+'%';}
-    if(key==='difficulty')s.difficulty=val;
-    if(key==='showFps')s.showFps=val;
-    if(key==='screenShake')s.screenShake=val;
-    if(key==='particles'){s.particles=val;JDR.Particles.setMax(val);}
+  updateSetting: function(key, val){
+    var s = JDR.SaveManager.data.settings;
+    if (key === 'musicVol') {
+      s.musicVol = parseInt(val);
+      JDR.Audio3D.setVolumes(s.sfxVol, s.musicVol);
+      document.getElementById('set-music-val').textContent = val + '%';
+    } else if (key === 'sfxVol') {
+      s.sfxVol = parseInt(val);
+      JDR.Audio3D.setVolumes(s.sfxVol, s.musicVol);
+      document.getElementById('set-sfx-val').textContent = val + '%';
+    } else if (key === 'cameraDistance') {
+      s.cameraDistance = parseFloat(val);
+      JDR.CONFIG.SIM_3D.CAMERA_DEFAULT_DISTANCE = s.cameraDistance;
+    } else if (key === 'graphicsQuality') {
+      s.graphicsQuality = val;
+    }
     JDR.SaveManager.save();
   },
 
-  resetProgress:function(){
-    if(confirm('Reset all progress? This cannot be undone!')){JDR.SaveManager.reset();this.showScreen('main-menu');}
+  resetProgress: function(){
+    if (confirm('Reset all exploration progress and currency? This cannot be undone!')) {
+      JDR.SaveManager.reset();
+      this.showScreen('main-menu');
+    }
   },
 
-  setupControls:function(){
-    var self=this;
-    document.addEventListener('keydown',function(e){
-      if(self.currentScreen==='main-menu'&&e.code==='Space'){e.preventDefault();self.startGame(1);return;}
-      if(self.currentScreen!=='game-screen')return;
-      var eng=JDR.engine;if(eng.gameOver)return;
-      if(e.code==='Escape'){e.preventDefault();eng.paused?eng.resume():eng.pause();return;}
-      if(eng.paused)return;
-      if(eng.mode===1){
-        if(e.code==='Space'||e.code==='ArrowUp'){e.preventDefault();eng.jump(0);}
-        if(e.code==='ArrowDown'){e.preventDefault();eng.duck(0,true);}
-      }else{
-        if(e.code==='KeyW'){e.preventDefault();eng.jump(0);}
-        if(e.code==='KeyS'){e.preventDefault();eng.duck(0,true);}
-        if(e.code==='ArrowUp'){e.preventDefault();eng.jump(1);}
-        if(e.code==='ArrowDown'){e.preventDefault();eng.duck(1,true);}
+  // ==================== MULTIPLAYER ACTIONS ====================
+  createMultiplayerRoom: function(){
+    var code = 'DINO' + Math.floor(Math.random() * 89 + 10);
+    var input = document.getElementById('room-code-input');
+    if (input) input.value = code;
+
+    var self = this;
+    JDR.Multiplayer3D.init(code, true, function(players){
+      self.updatePlayerListUI(players);
+    });
+
+    var launchBtn = document.getElementById('btn-launch-multi');
+    if (launchBtn) launchBtn.style.display = 'block';
+  },
+
+  joinMultiplayerRoom: function(){
+    var input = document.getElementById('room-code-input');
+    var code = input ? input.value.trim() : '';
+    if (!code) {
+      alert('Please enter a room code!');
+      return;
+    }
+
+    var self = this;
+    JDR.Multiplayer3D.init(code, false, function(players){
+      self.updatePlayerListUI(players);
+    });
+
+    var launchBtn = document.getElementById('btn-launch-multi');
+    if (launchBtn) launchBtn.style.display = 'block';
+  },
+
+  updatePlayerListUI: function(players){
+    var listEl = document.getElementById('multiplayer-player-list');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+    players.forEach(function(p){
+      var item = document.createElement('div');
+      item.className = 'player-item';
+      item.innerHTML = '<span>🦖 ' + p.name + '</span><span class="clay-badge">' + (p.isLocal ? 'YOU' : 'READY') + '</span>';
+      listEl.appendChild(item);
+    });
+  },
+
+  startMultiplayerGame: function(){
+    this.start3DSimulation({ multiplayer: true });
+  },
+
+  // ==================== CONTROLS SETUP ====================
+  setupControls: function(){
+    var self = this;
+    window.addEventListener('keydown', function(e){
+      if (self.currentScreen === 'main-menu' && (e.code === 'Space' || e.code === 'Enter')) {
+        e.preventDefault();
+        self.showScreen('mode-select');
       }
     });
-    document.addEventListener('keyup',function(e){
-      if(self.currentScreen!=='game-screen')return;
-      var eng=JDR.engine;
-      if(eng.mode===1){if(e.code==='ArrowDown')eng.duck(0,false);}
-      else{if(e.code==='KeyS')eng.duck(0,false);if(e.code==='ArrowDown')eng.duck(1,false);}
-    });
-    // Mobile Touch zones
-    var mJump = document.getElementById('mobile-jump');
-    var mDuck = document.getElementById('mobile-duck');
-    
-    var startJump = function(e){ e.preventDefault(); if(!JDR.engine.paused) JDR.engine.jump(0); };
-    var startDuck = function(e){ e.preventDefault(); if(!JDR.engine.paused) JDR.engine.duck(0,true); };
-    var stopDuck = function(e){ e.preventDefault(); JDR.engine.duck(0,false); };
-
-    mJump.addEventListener('touchstart', startJump);
-    mDuck.addEventListener('touchstart', startDuck);
-    mDuck.addEventListener('touchend', stopDuck);
-    
-    // Global tap to jump (anywhere else on screen)
-    document.getElementById('game-screen').addEventListener('touchstart', function(e){
-      if(e.target === mJump || e.target === mDuck || mJump.contains(e.target) || mDuck.contains(e.target)) return;
-      if(self.currentScreen==='game-screen' && !JDR.engine.paused) JDR.engine.jump(0);
-    });
   },
 
-  toggleFullscreen:function(){
-    if(!document.fullscreenElement){
+  toggleFullscreen: function(){
+    if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(function(e){
-        console.error('Error entering fullscreen:',e);
+        console.warn('Fullscreen unavailable:', e);
       });
-    }else{
+    } else {
       document.exitFullscreen();
     }
   }
 };
 
-window.addEventListener('DOMContentLoaded',function(){JDR.app.init();});
+window.addEventListener('DOMContentLoaded', function(){
+  JDR.app.init();
+});

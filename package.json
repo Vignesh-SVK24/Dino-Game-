@@ -1,0 +1,24 @@
+{
+  "name": "jurassic-dino-run",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Vignesh-SVK24/Dino-Game-.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Vignesh-SVK24/Dino-Game-/issues"
+  },
+  "homepage": "https://github.com/Vignesh-SVK24/Dino-Game-#readme",
+  "dependencies": {
+    "three": "^0.186.1"
+  }
+}
