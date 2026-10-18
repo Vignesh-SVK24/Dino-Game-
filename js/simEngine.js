@@ -37,7 +37,7 @@ JDR.simEngine = (function(){
     canvas = document.getElementById('canvas-3d');
     if (!canvas) return;
 
-    // Renderer
+    // Renderer with ACES Filmic Tone Mapping for cinematic color depth
     renderer = new THREE.WebGLRenderer({
       canvas: canvas,
       antialias: true,
@@ -48,6 +48,11 @@ JDR.simEngine = (function(){
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+
+    // Apply quality preset from saved settings
+    applyQualityPreset();
 
     // Scene
     scene = new THREE.Scene();
@@ -61,9 +66,97 @@ JDR.simEngine = (function(){
     );
     cameraCtrl = new JDR.Camera3D(camera, canvas);
 
+    initDustParticles();
+
     window.addEventListener('resize', onWindowResize);
     setupKeyboard();
     setupMobileControls();
+  }
+
+  function applyQualityPreset(){
+    if (!renderer) return;
+    var q = JDR.SaveManager.data.settings.graphicsQuality || 'high';
+    if (q === 'low') {
+      renderer.setPixelRatio(1.0);
+      renderer.shadowMap.type = THREE.BasicShadowMap;
+    } else if (q === 'medium') {
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+      renderer.shadowMap.type = THREE.PCFShadowMap;
+    } else {
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0));
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    }
+  }
+
+  // Dust puff particle system for sprinting and landing
+  var dustPuffs = [];
+  var dustGroup = null;
+  function initDustParticles(){
+    dustGroup = new THREE.Group();
+    var pGeom = new THREE.DodecahedronGeometry(0.35, 0);
+    var pMat = new THREE.MeshBasicMaterial({
+      color: 0xd9cbb2,
+      transparent: true,
+      opacity: 0.65,
+      depthWrite: false
+    });
+
+    for (var i = 0; i < 24; i++) {
+      var p = new THREE.Mesh(pGeom, pMat.clone());
+      p.visible = false;
+      dustGroup.add(p);
+      dustPuffs.push({
+        mesh: p,
+        alive: false,
+        life: 0,
+        maxLife: 0.5,
+        velocity: new THREE.Vector3()
+      });
+    }
+  }
+
+  function spawnDustPuff(pos, count){
+    if (!dustGroup || JDR.SaveManager.data.settings.graphicsQuality === 'low') return;
+    var spawned = 0;
+    for (var i = 0; i < dustPuffs.length && spawned < (count || 3); i++) {
+      var p = dustPuffs[i];
+      if (!p.alive) {
+        p.alive = true;
+        p.life = 0;
+        p.mesh.visible = true;
+        p.mesh.position.set(
+          pos.x + (Math.random() - 0.5) * 0.8,
+          pos.y + 0.1,
+          pos.z + (Math.random() - 0.5) * 0.8
+        );
+        p.mesh.scale.set(0.6, 0.6, 0.6);
+        p.velocity.set(
+          (Math.random() - 0.5) * 2.5,
+          1.2 + Math.random() * 1.8,
+          (Math.random() - 0.5) * 2.5
+        );
+        spawned++;
+      }
+    }
+  }
+
+  function updateDustPuffs(delta){
+    for (var i = 0; i < dustPuffs.length; i++) {
+      var p = dustPuffs[i];
+      if (p.alive) {
+        p.life += delta;
+        var prog = p.life / p.maxLife;
+        if (prog >= 1.0) {
+          p.alive = false;
+          p.mesh.visible = false;
+        } else {
+          p.mesh.position.addScaledVector(p.velocity, delta);
+          var sc = 0.6 + prog * 1.8;
+          p.mesh.scale.set(sc, sc, sc);
+          p.mesh.material.opacity = (1.0 - prog) * 0.55;
+        }
+      }
+    }
   }
 
   function onWindowResize(){
@@ -73,12 +166,16 @@ JDR.simEngine = (function(){
     renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
+  var fillLight = null;
+
   function start(options){
     if (!renderer) init();
     options = options || {};
     isTimeTrial = !!options.timeTrial;
     timeTrialTimer = 0;
     checkpointsPassed = 0;
+
+    applyQualityPreset();
 
     var s = JDR.SaveManager.data;
     var mapId = s.selectedMap || 'jungle';
@@ -89,33 +186,42 @@ JDR.simEngine = (function(){
       scene.remove(scene.children[0]);
     }
 
-    // Sky & Distance Fog
-    scene.background = new THREE.Color(mapConfig.skyColor || 0x88c4e0);
+    // Sky & Distance Fog with rich color contrast
+    scene.background = new THREE.Color(mapConfig.skyColor || 0x5faad6);
     scene.fog = new THREE.Fog(
-      mapConfig.fogColor || 0x224828,
-      mapConfig.fogNear || 25,
-      mapConfig.fogFar || 180
+      mapConfig.fogColor || 0x1f4a2a,
+      mapConfig.fogNear || 35,
+      mapConfig.fogFar || 195
     );
 
-    // Directional Sun Light casting shadows
-    sunLight = new THREE.DirectionalLight(mapConfig.sunColor || 0xfff3d6, mapConfig.sunIntensity || 1.6);
-    sunLight.position.set(45, 80, 50);
+    // Directional Sun Light casting crisp soft shadows
+    var shadowRes = s.settings.graphicsQuality === 'low' ? 512 : (s.settings.graphicsQuality === 'medium' ? 1024 : 2048);
+    sunLight = new THREE.DirectionalLight(mapConfig.sunColor || 0xfff6d9, mapConfig.sunIntensity || 1.85);
+    sunLight.position.set(50, 85, 55);
     sunLight.castShadow = true;
-    sunLight.shadow.mapSize.width = 2048;
-    sunLight.shadow.mapSize.height = 2048;
+    sunLight.shadow.mapSize.width = shadowRes;
+    sunLight.shadow.mapSize.height = shadowRes;
     sunLight.shadow.camera.near = 10;
-    sunLight.shadow.camera.far = 220;
-    var d = 60;
+    sunLight.shadow.camera.far = 230;
+    var d = 65;
     sunLight.shadow.camera.left = -d;
     sunLight.shadow.camera.right = d;
     sunLight.shadow.camera.top = d;
     sunLight.shadow.camera.bottom = -d;
-    sunLight.shadow.bias = -0.0005;
+    sunLight.shadow.bias = -0.0004;
     scene.add(sunLight);
 
     // Ambient Hemisphere Light
-    ambientLight = new THREE.HemisphereLight(mapConfig.sunColor || 0xfff3d6, mapConfig.ambientColor || 0x6e9070, 0.7);
+    ambientLight = new THREE.HemisphereLight(mapConfig.sunColor || 0xfff6d9, mapConfig.ambientColor || 0x487a52, 0.75);
     scene.add(ambientLight);
+
+    // Rim / Fill Light opposite sun to illuminate shadow contours
+    fillLight = new THREE.DirectionalLight(mapConfig.ambientColor || 0x487a52, 0.65);
+    fillLight.position.set(-50, 40, -55);
+    scene.add(fillLight);
+
+    // Add dust group to scene
+    scene.add(dustGroup);
 
     // Build World (Terrain, Biome, Collectibles)
     world3D = new JDR.World3D(scene, mapConfig);
@@ -240,16 +346,23 @@ JDR.simEngine = (function(){
           currentPos.y = terrainY;
           dinoCtrl.verticalVelocity = 0;
           dinoCtrl.isGrounded = true;
+          spawnDustPuff(currentPos, 6); // Ground landing dust burst!
           JDR.Audio3D.playFootstep(dinoCtrl.config.mass3D, false, inWater);
         }
       } else {
         currentPos.y = terrainY;
+        if (isSprinting && speed > 12.0 && Math.random() < 0.35) {
+          spawnDustPuff(currentPos, 1); // Gallop dust trail!
+        }
       }
 
-      // Sun follows player for endless shadow fidelity
-      sunLight.position.set(currentPos.x + 45, 80, currentPos.z + 50);
+      // Sun and rim fill light follow player for continuous high-contrast shadows
+      sunLight.position.set(currentPos.x + 50, 85, currentPos.z + 55);
       sunLight.target.position.copy(currentPos);
       sunLight.target.updateMatrixWorld();
+      if (fillLight) {
+        fillLight.position.set(currentPos.x - 50, 40, currentPos.z - 55);
+      }
 
       activeFocusPos.copy(currentPos);
       activeFocusPos.y += 1.8;
@@ -290,6 +403,9 @@ JDR.simEngine = (function(){
     if (world3D) {
       world3D.update(delta, activeFocusPos);
     }
+
+    // Update Dust Puffs Particle System
+    updateDustPuffs(delta);
 
     // Update Remote Multiplayer Players
     JDR.Multiplayer3D.update(delta);

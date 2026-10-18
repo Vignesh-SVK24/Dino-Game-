@@ -47,23 +47,23 @@ JDR.MAPS = [
   {
     id: 'jungle',
     name: 'Jurassic Jungle',
-    description: 'Dense primeval rainforest with rushing rivers and towering cycads',
+    description: 'Dense primeval rainforest with rushing turquoise rivers and towering cycads',
     unlocked: true,
     price: 0,
     bgImage: 'assets/jungle.png',
-    skyColor: 0x88c4e0,
-    fogColor: 0x224828,
-    fogNear: 25,
-    fogFar: 180,
-    groundColor: 0x2e5223,
-    groundRoughness: 0.85,
-    ambientColor: 0x6e9070,
-    sunColor: 0xfff3d6,
-    sunIntensity: 1.6,
-    waterColor: 0x1f7482,
+    skyColor: 0x5faad6,       // Rich tropical sky blue
+    fogColor: 0x1f4a2a,       // Deep emerald atmospheric mist
+    fogNear: 35,
+    fogFar: 195,
+    groundColor: 0x3d702d,   // Vibrant lush mossy jungle floor
+    groundRoughness: 0.78,
+    ambientColor: 0x487a52,   // Warm green foliage bounce
+    sunColor: 0xfff6d9,       // Warm golden tropical sun
+    sunIntensity: 1.85,
+    waterColor: 0x148f9e,     // Brilliant clear turquoise river
     waterLevel: -1.2,
     particleType: 'leaves',
-    particleColor: 0x5a9a3f,
+    particleColor: 0x76cc3b,
     treeCount: 160,
     rockCount: 75,
     biomeType: 'jungle',
@@ -80,20 +80,20 @@ JDR.MAPS = [
     unlocked: true,
     price: 0,
     bgImage: 'assets/volcano.png',
-    skyColor: 0x3d170f,
-    fogColor: 0x2a0d08,
-    fogNear: 20,
-    fogFar: 150,
-    groundColor: 0x2a1c18,
-    groundRoughness: 0.9,
-    ambientColor: 0x773322,
-    sunColor: 0xff7033,
-    sunIntensity: 1.4,
-    waterColor: 0xff3b11, // lava
+    skyColor: 0x331008,       // Dramatic fiery dark sky
+    fogColor: 0x240804,       // Smoky charcoal & ember haze
+    fogNear: 25,
+    fogFar: 160,
+    groundColor: 0x221714,   // Charcoal basalt rock with high contrast
+    groundRoughness: 0.88,
+    ambientColor: 0x882a14,   // Intense magma floor bounce
+    sunColor: 0xff6a22,       // Blazing orange volcanic sun
+    sunIntensity: 1.6,
+    waterColor: 0xff4400,     // Incandescent glowing magma
     isLava: true,
     waterLevel: -0.8,
     particleType: 'ash',
-    particleColor: 0xff5522,
+    particleColor: 0xff6a22,
     treeCount: 30,
     rockCount: 140,
     biomeType: 'volcano',
@@ -110,19 +110,19 @@ JDR.MAPS = [
     unlocked: false,
     price: 500,
     bgImage: 'assets/desert.png',
-    skyColor: 0xffdb99,
-    fogColor: 0xcc9f66,
-    fogNear: 35,
-    fogFar: 200,
-    groundColor: 0xd8ab68,
-    groundRoughness: 0.95,
-    ambientColor: 0x998060,
-    sunColor: 0xfffaea,
-    sunIntensity: 2.0,
-    waterColor: 0x6bb8b0,
+    skyColor: 0x62a8d8,       // Clear desert blue sky
+    fogColor: 0xd4a055,       // Warm golden-hour dust haze
+    fogNear: 40,
+    fogFar: 220,
+    groundColor: 0xdeb060,   // Rich warm golden sandstone
+    groundRoughness: 0.82,
+    ambientColor: 0xb58045,   // Terracotta ground bounce
+    sunColor: 0xfff0c2,       // Brilliant golden-hour sunlight
+    sunIntensity: 2.1,
+    waterColor: 0x4aa69e,     // Desert oasis spring
     waterLevel: -3.5,
     particleType: 'sand',
-    particleColor: 0xdfb478,
+    particleColor: 0xf5cf78,
     treeCount: 40,
     rockCount: 110,
     biomeType: 'desert',
@@ -138,16 +138,16 @@ JDR.MAPS = [
     description: 'Glacial crystalline peaks, snowdrifts, and howling blizzards',
     unlocked: false,
     price: 1000,
-    skyColor: 0xb5d4e8,
-    fogColor: 0x88b0cc,
-    fogNear: 25,
-    fogFar: 160,
-    groundColor: 0xdde9f2,
-    groundRoughness: 0.6,
-    ambientColor: 0x7799bb,
-    sunColor: 0xecf6ff,
-    sunIntensity: 1.8,
-    waterColor: 0x5a9ac0,
+    skyColor: 0x88c0e8,       // Crisp glacial arctic sky
+    fogColor: 0x7fa9cc,       // Cool blue atmospheric snow mist
+    fogNear: 30,
+    fogFar: 175,
+    groundColor: 0xe8f4fa,   // Bright pristine snow with blue shadows
+    groundRoughness: 0.52,   // Slightly icy specular sheen
+    ambientColor: 0x608fb8,   // Cool blue sky bounce
+    sunColor: 0xf4f9ff,       // Bright crisp winter sun
+    sunIntensity: 2.0,
+    waterColor: 0x3d94cc,     // Glacial meltwater
     waterLevel: -1.5,
     particleType: 'snow',
     particleColor: 0xffffff,
@@ -166,19 +166,19 @@ JDR.MAPS = [
     description: 'Murky primeval wetlands with giant bioluminescent mushrooms and mangrove roots',
     unlocked: false,
     price: 1500,
-    skyColor: 0x22382a,
-    fogColor: 0x162c1e,
-    fogNear: 15,
-    fogFar: 120,
-    groundColor: 0x243322,
-    groundRoughness: 0.9,
-    ambientColor: 0x3d6644,
-    sunColor: 0x90e0aa,
-    sunIntensity: 1.2,
-    waterColor: 0x1a3325,
+    skyColor: 0x1f3b28,       // Deep atmospheric dusk green
+    fogColor: 0x16301e,       // Murky humid swamp mist
+    fogNear: 20,
+    fogFar: 130,
+    groundColor: 0x2a3d24,   // Dark rich peat and moss
+    groundRoughness: 0.85,
+    ambientColor: 0x3d7048,   // Bioluminescent green bounce
+    sunColor: 0x98f2b5,       // Eerie emerald-tinted sun
+    sunIntensity: 1.45,
+    waterColor: 0x17382b,     // Deep reflective murky water
     waterLevel: -0.4,
     particleType: 'spores',
-    particleColor: 0x66ff88,
+    particleColor: 0x55ff88,  // Glowing bioluminescent spores
     treeCount: 130,
     rockCount: 80,
     biomeType: 'swamp',
@@ -199,14 +199,13 @@ JDR.DINOS = [
     price: 0,
     owned: true,
     color: '#8b7355',
-    color3D: 0x7a6344,
-    accent3D: 0x4a3a28,
-    belly3D: 0xc4a980,
+    color3D: 0x8a623a,       // Warm rich earthy predator hide
+    accent3D: 0x4a2e1b,      // Dark tiger-striped dorsal crests
+    belly3D: 0xd9b88a,       // Warm pale cream underbelly counter-shading
     speed: 1.0,
     jump: 1.0,
     size: 1.0,
     desc: 'The apex king of dinosaurs. Massive crushing jaw, heavy ground-shaking footsteps, and unmatched charging power.',
-    // 3D Simulator Parameters
     scale3D: 1.35,
     walkSpeed3D: 7.5,
     runSpeed3D: 14.5,
@@ -220,7 +219,6 @@ JDR.DINOS = [
     canSwim: false,
     canFly: false,
     roarSound: 'trex',
-    // 2D Runner stats
     w: 60, h: 50,
     body: { w: 46, h: 30 }, head: { w: 24, h: 20, jaw: 14 }, tail: 35, armLen: 8,
     legLen: 18, legW: 8, skin: 'spots'
@@ -233,9 +231,9 @@ JDR.DINOS = [
     price: 200,
     owned: false,
     color: '#4a5d6e',
-    color3D: 0x415362,
-    accent3D: 0xd34824, // sail color
-    belly3D: 0x8698a2,
+    color3D: 0x3d5466,       // Deep aquatic river teal-slate
+    accent3D: 0xe84e1b,      // Brilliant crimson-orange dorsal sail with highlights
+    belly3D: 0x9cb8c9,       // Pale aquatic belly
     speed: 1.1,
     jump: 0.9,
     size: 1.1,
@@ -266,9 +264,9 @@ JDR.DINOS = [
     price: 300,
     owned: false,
     color: '#5a7a3a',
-    color3D: 0x4a6a32,
-    accent3D: 0xc86a24, // plates
-    belly3D: 0x9bb07a,
+    color3D: 0x4a7536,       // Rich forest jade green
+    accent3D: 0xe57218,      // Fiery amber-orange dorsal plates with golden trim
+    belly3D: 0xa9c488,       // Soft pale moss belly
     speed: 0.85,
     jump: 0.85,
     size: 1.15,
@@ -299,9 +297,9 @@ JDR.DINOS = [
     price: 400,
     owned: false,
     color: '#5c7a8a',
-    color3D: 0x546e7a,
-    accent3D: 0x37474f,
-    belly3D: 0x90a4ae,
+    color3D: 0x58788a,       // Majestic ocean-slate blue hide
+    accent3D: 0x344b57,      // Deep slate spine ridges
+    belly3D: 0x9ec0d1,       // Pale sky belly
     speed: 0.9,
     jump: 1.15,
     size: 1.25,
@@ -332,9 +330,9 @@ JDR.DINOS = [
     price: 150,
     owned: false,
     color: '#7a8a3a',
-    color3D: 0x708238,
-    accent3D: 0x4e5d26,
-    belly3D: 0xb5c680,
+    color3D: 0x829636,       // Swift golden-chartreuse hide
+    accent3D: 0x4a591e,      // Dark cheetah dapples
+    belly3D: 0xcfe08b,       // Pale sun belly
     speed: 1.25,
     jump: 1.1,
     size: 0.75,
@@ -364,9 +362,9 @@ JDR.DINOS = [
     price: 350,
     owned: false,
     color: '#5a6a7a',
-    color3D: 0x4f5d6b,
-    accent3D: 0x2e3b46,
-    belly3D: 0xa0b0bd,
+    color3D: 0x526778,       // Steel predator slate
+    accent3D: 0xd47326,      // Fiery amber feather crest tips
+    belly3D: 0xb2c7d9,       // Soft pale underbelly
     speed: 1.3,
     jump: 1.2,
     size: 0.85,
@@ -397,9 +395,9 @@ JDR.DINOS = [
     price: 500,
     owned: false,
     color: '#6a5a4a',
-    color3D: 0x5a4a3a,
-    accent3D: 0x3d3227,
-    belly3D: 0x8c7c6c,
+    color3D: 0x66523d,       // Weathered heavy bronze-earth hide
+    accent3D: 0x36271c,      // Dark bone-studded osteoderm shields
+    belly3D: 0xa89378,       // Tough leathery belly
     speed: 0.75,
     jump: 0.7,
     size: 1.3,
@@ -430,9 +428,9 @@ JDR.DINOS = [
     price: 450,
     owned: false,
     color: '#7a6a4a',
-    color3D: 0x6e5c3e,
-    accent3D: 0x483a24,
-    belly3D: 0xa89678,
+    color3D: 0x786445,       // Warm ochre ceratopsian hide
+    accent3D: 0xa84a22,      // Terracotta sun-patterned frill rim
+    belly3D: 0xbdb094,       // Soft sandy belly
     speed: 0.9,
     jump: 0.8,
     size: 1.15,
@@ -463,9 +461,9 @@ JDR.DINOS = [
     price: 600,
     owned: false,
     color: '#8a624a',
-    color3D: 0x7c543c,
-    accent3D: 0xb23b23, // cranial crest
-    belly3D: 0xd4a88c,
+    color3D: 0x8a573b,       // Warm canyon terracotta body
+    accent3D: 0xd9381e,      // Blazing scarlet-orange cranial crest
+    belly3D: 0xedd0b9,       // Pale flight belly
     speed: 1.35,
     jump: 1.4,
     size: 1.05,
@@ -473,10 +471,10 @@ JDR.DINOS = [
     scale3D: 1.2,
     walkSpeed3D: 6.5,
     runSpeed3D: 12.0,
-    sprintSpeed3D: 26.0, // flight speed
+    sprintSpeed3D: 26.0,
     acceleration3D: 20.0,
     turnRate3D: 3.5,
-    jumpImpulse3D: 16.0, // launch into flight
+    jumpImpulse3D: 16.0,
     staminaMax3D: 110,
     mass3D: 45,
     mountAnchor: { x: 0, y: 1.8, z: -0.1 },

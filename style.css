@@ -7,32 +7,33 @@
 }
 
 :root {
-  /* Clay Palette */
+  /* Enhanced Prehistoric Clay Palette */
   --clay-bg: #141b17;
   --clay-ivory: #F5EBDD;
-  --clay-sand: #E9D7BD;
-  --clay-jungle: #527A46;
-  --clay-fern: #A7C78A;
-  --clay-volcano: #E98243;
-  --clay-sky: #9CCFE0;
-  --clay-forest: #26382B;
-  --clay-dark-brown: #514233;
-  --clay-amber: #E29B38;
-  --clay-card-bg: #ece1ce;
-  --clay-card-inner: #faf4e8;
+  --clay-sand: #E5CFAD;
+  --clay-jungle: #3F713D;
+  --clay-fern: #86A873;
+  --clay-volcano: #EF6C35;
+  --clay-sky: #70BFE0;
+  --clay-forest: #203D2C;
+  --clay-dark-brown: #3E3127;
+  --clay-amber: #F3B642;
+  --clay-card-bg: #F5EBDD;
+  --clay-card-inner: #FFF4E2;
+  --clay-text: #263329;
   
-  /* Tactical Clay Shadows */
-  --clay-shadow-card: 10px 14px 28px rgba(0, 0, 0, 0.45), 
-                      inset 3px 3px 6px rgba(255, 255, 255, 0.55), 
-                      inset -4px -4px 8px rgba(70, 50, 30, 0.25);
+  /* Tactical Clay Shadows with pronounced bevels and soft drop shadows */
+  --clay-shadow-card: 12px 16px 32px rgba(0, 0, 0, 0.48), 
+                      inset 4px 4px 8px rgba(255, 255, 255, 0.75), 
+                      inset -5px -5px 10px rgba(50, 35, 20, 0.22);
   
-  --clay-shadow-btn: 6px 8px 16px rgba(0, 0, 0, 0.35),
-                     inset 2px 2px 4px rgba(255, 255, 255, 0.6),
-                     inset -3px -3px 6px rgba(0, 0, 0, 0.25);
+  --clay-shadow-btn: 7px 10px 20px rgba(0, 0, 0, 0.38),
+                     inset 3px 3px 6px rgba(255, 255, 255, 0.8),
+                     inset -3px -3px 7px rgba(0, 0, 0, 0.25);
 
   --clay-shadow-btn-pressed: 2px 3px 6px rgba(0, 0, 0, 0.4),
-                             inset 3px 3px 6px rgba(0, 0, 0, 0.35),
-                             inset -2px -2px 4px rgba(255, 255, 255, 0.3);
+                             inset 4px 4px 8px rgba(0, 0, 0, 0.35),
+                             inset -2px -2px 4px rgba(255, 255, 255, 0.4);
 
   --font-title: 'Cinzel Decorative', serif;
   --font-ui: 'Rajdhani', sans-serif;
