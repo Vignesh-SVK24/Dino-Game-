@@ -11,9 +11,16 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Rajdhani:wght@500;600;700;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=4.5">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦖</text></svg>">
-  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css?v=5.0">
+  <!-- Game Favicons & Browser Address Bar Icons -->
+  <link rel="icon" type="image/x-icon" href="favicon.ico?v=5.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/logo-32.png?v=5.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/logo-16.png?v=5.0">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/logo-192.png?v=5.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=5.0">
+  <link rel="shortcut icon" href="favicon.ico?v=5.0">
+  <meta name="theme-color" content="#08111c">
+  <link rel="manifest" href="manifest.json?v=5.0">
 </head>
 <body>
   <div id="app">
@@ -23,7 +30,7 @@
     <!-- Loading Screen -->
     <div id="loading-screen" class="screen active">
       <div class="clay-card loading-content" style="padding: 40px; text-align: center; width: min(420px, 92vw);">
-        <div style="font-size: 4rem; margin-bottom: 15px;">🦖</div>
+        <img src="assets/logo-192.png?v=5.0" alt="Jurassic Dino Run Logo" class="loading-logo-img">
         <h1 class="game-title">Jurassic<br><span>Dino Run</span></h1>
         <p class="subtitle" style="color: #63503f; margin-bottom: 25px;">3D Dinosaur Riding Simulator</p>
         <div style="width: 100%; height: 14px; background: rgba(0,0,0,0.12); border-radius: 8px; overflow: hidden; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.4);">
@@ -41,8 +48,13 @@
       </div>
 
       <div class="menu-header">
-        <h1 class="game-title">Jurassic<br><span>Dino Run</span></h1>
-        <p class="subtitle">3D Dinosaur Riding Simulator</p>
+        <div class="menu-brand-row">
+          <img src="assets/logo-192.png?v=5.0" alt="Jurassic Dino Run Logo" class="menu-logo-img">
+          <div>
+            <h1 class="game-title">Jurassic<br><span>Dino Run</span></h1>
+            <p class="subtitle">3D Dinosaur Riding Simulator</p>
+          </div>
+        </div>
       </div>
 
       <div class="menu-buttons">
@@ -627,27 +639,27 @@
   </div>
 
   <!-- Three.js 3D Engine & Loaders -->
-  <script src="js/libs/three.min.js?v=4.5"></script>
-  <script src="js/libs/OrbitControls.js?v=4.5"></script>
-  <script src="js/libs/GLTFLoader.js?v=4.5"></script>
+  <script src="js/libs/three.min.js?v=5.0"></script>
+  <script src="js/libs/OrbitControls.js?v=5.0"></script>
+  <script src="js/libs/GLTFLoader.js?v=5.0"></script>
 
   <!-- Game Core & 3D Simulation Modules -->
-  <script src="js/config.js?v=4.5"></script>
-  <script src="js/audio.js?v=4.5"></script>
-  <script src="js/audio3d.js?v=4.5"></script>
-  <script src="js/dino3d.js?v=4.5"></script>
-  <script src="js/player3d.js?v=4.5"></script>
-  <script src="js/world3d.js?v=4.5"></script>
-  <script src="js/camera3d.js?v=4.5"></script>
-  <script src="js/multiplayer3d.js?v=4.5"></script>
-  <script src="js/homeCinematic3d.js?v=4.5"></script>
-  <script src="js/simEngine.js?v=4.5"></script>
+  <script src="js/config.js?v=5.0"></script>
+  <script src="js/audio.js?v=5.0"></script>
+  <script src="js/audio3d.js?v=5.0"></script>
+  <script src="js/dino3d.js?v=5.0"></script>
+  <script src="js/player3d.js?v=5.0"></script>
+  <script src="js/world3d.js?v=5.0"></script>
+  <script src="js/camera3d.js?v=5.0"></script>
+  <script src="js/multiplayer3d.js?v=5.0"></script>
+  <script src="js/homeCinematic3d.js?v=5.0"></script>
+  <script src="js/simEngine.js?v=5.0"></script>
 
   <!-- Classic 2D Engine (Preserved) -->
-  <script src="js/renderer.js?v=4.5"></script>
-  <script src="js/engine.js?v=4.5"></script>
+  <script src="js/renderer.js?v=5.0"></script>
+  <script src="js/engine.js?v=5.0"></script>
 
   <!-- Application Coordinator & UI Controller -->
-  <script src="js/app.js?v=4.5"></script>
+  <script src="js/app.js?v=5.0"></script>
 </body>
 </html>
